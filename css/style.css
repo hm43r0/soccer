@@ -1,0 +1,9 @@
+/* In your plugin's css/style.css */
+
+/* Force the dark background when your dashboard is active */
+body.your-plugin-dashboard-active {
+    background: linear-gradient(to bottom right, #1e293b, #4c1d95, #1e293b) !important; /* Slate-900, Purple-900, Slate-900 */
+    background-size: 200% 200% !important; /* For animation if you want it, though your HTML has its own */
+    background-attachment: fixed !important; /* Ensure background stays fixed */
+    color: #e2e8f0 !important; /* Default text color for contrast */
+}

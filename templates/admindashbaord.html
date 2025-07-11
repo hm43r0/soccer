@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Team & Matches</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#6366f1",
+            secondary: "#8b5cf6",
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+    body {
+      font-family: "Inter", sans-serif;
+    }
+
+    .glassmorphism {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .card-hover {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .animate-float {
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    .sidebar-item {
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar-item::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent);
+      transition: left 0.5s;
+    }
+
+    .sidebar-item:hover::before {
+      left: 100%;
+    }
+
+    .pulse-ring {
+      animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(0.8);
+      }
+
+      40%,
+      50% {
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1.2);
+        opacity: 0;
+      }
+    }
+
+    /* Custom Scrollbar Styling */
+    /* For Webkit browsers (Chrome, Safari) */
+    ::-webkit-scrollbar {
+      width: 10px;
+      /* Width of the scrollbar */
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      /* Track color similar to glassmorphism */
+      border-radius: 10px;
+      /* Rounded corners for the track */
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(128, 90, 242, 0.6);
+      /* Purple color for the thumb, slightly transparent */
+      border-radius: 10px;
+      /* Rounded corners for the thumb */
+      border: 2px solid transparent;
+      /* Creates padding around the thumb */
+      background-clip: content-box;
+      /* Ensures padding is respected */
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.8);
+      /* Darker purple on hover */
+    }
+
+    /* For Firefox */
+    body {
+      scrollbar-width: thin;
+      /* 'auto' or 'thin' */
+      scrollbar-color: rgba(128, 90, 242, 0.6) rgba(255, 255, 255, 0.05);
+      /* thumb track */
+    }
+
+    .teamsList,
+    .matchesList {
+      /* Apply similar styling to specific scrollable containers */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(128, 90, 242, 0.6) rgba(255, 255, 255, 0.05);
+    }
+
+    .teamsList::-webkit-scrollbar,
+    .matchesList::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .teamsList::-webkit-scrollbar-track,
+    .matchesList::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .teamsList::-webkit-scrollbar-thumb,
+    .matchesList::-webkit-scrollbar-thumb {
+      background: rgba(128, 90, 242, 0.6);
+      border-radius: 10px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    .teamsList::-webkit-scrollbar-thumb:hover,
+    .matchesList::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.8);
+    }
+
+    /* Custom Select Dropdown Styling */
+    select {
+      appearance: none;
+      /* Remove default browser styling */
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(156, 163, 175, 1)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 20px;
+      padding-right: 40px;
+      /* Make room for the custom arrow */
+    }
+
+    /* Style the dropdown options */
+    select option {
+      background: #7945a3;
+      /* Dark background for options */
+      color: white;
+      padding: 12px;
+      border: none;
+    }
+
+    /* Firefox specific option styling */
+    select option:checked {
+      background: rgba(99, 102, 241, 0.3);
+    }
+
+    /* Hover effect for options (limited browser support) */
+    select option:hover {
+      background: rgba(99, 102, 241, 0.2);
+    }
+
+    /* Focus styling for select */
+    select:focus {
+      outline: none;
+      border-color: transparent;
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.5);
+    }
+
+    /* Custom styling for disabled options */
+    select option:disabled {
+      color: rgba(156, 163, 175, 0.5);
+      background: rgba(30, 41, 59, 0.5);
+    }
+
+    /* Hide number input spinners for Chrome, Safari, Edge, Opera */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        /* Hidden by default on mobile */
+        transition: transform 0.3s ease-in-out;
+        position: fixed;
+        /* Position fixed for overlay effect */
+        z-index: 50;
+        /* Ensure it's above other content */
+      }
+
+      .sidebar.active {
+        transform: translateX(0);
+        /* Show when active */
+      }
+
+      .sidebar-overlay {
+        display: none;
+        /* Hidden by default */
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+        /* Below sidebar, above main content */
+      }
+
+      .sidebar-overlay.active {
+        display: block;
+        /* Show when sidebar is active */
+      }
+
+      .main-content {
+        width: 100%;
+        /* Take full width on mobile */
+        margin-left: 0;
+        /* Remove left margin */
+      }
+
+      .header h2,
+      .header p {
+        text-align: center;
+        /* Center header text */
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+        /* Stack stats on small screens */
+      }
+
+      .form-and-list-grid {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+        /* Stack form and list */
+      }
+
+      /* Hide desktop menu icon, show mobile menu icon */
+      .desktop-menu-icon {
+        display: none;
+      }
+
+      .mobile-menu-icon {
+        display: block;
+      }
+    }
+
+    @media (min-width: 769px) {
+
+      /* Ensure mobile menu icon is hidden on larger screens */
+      .mobile-menu-icon {
+        display: none;
+      }
+
+      .sidebar {
+        transform: translateX(0);
+        /* Always visible on desktop */
+        position: static;
+        /* Not fixed */
+      }
+    }
+
+    .custom-checkbox {
+      display: inline-block;
+      position: relative;
+      width: 18px;
+      height: 18px;
+    }
+
+    .custom-checkbox input[type="checkbox"] {
+      opacity: 0;
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 2;
+      cursor: not-allowed;
+    }
+
+    .custom-checkbox span {
+      display: block;
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 2px solid #22c55e;
+      /* Default green */
+      background: transparent;
+      box-sizing: border-box;
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Green (Goal) */
+    .custom-checkbox input[type="checkbox"]:checked+span {
+      background: #22c55e;
+      border-color: #22c55e;
+    }
+
+    .custom-checkbox input[type="checkbox"]:checked+span::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 0px;
+      width: 5px;
+      height: 10px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      pointer-events: none;
+    }
+
+    /* Blue Card */
+    .blue-checkbox span {
+      border-color: #3b82f6;
+    }
+
+    .blue-checkbox input[type="checkbox"]:checked+span {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    /* Yellow Card */
+    .yellow-checkbox span {
+      border-color: #facc15;
+    }
+
+    .yellow-checkbox input[type="checkbox"]:checked+span {
+      background: #facc15;
+      border-color: #facc15;
+    }
+
+    /* Red Card */
+    .red-checkbox span {
+      border-color: #ef4444;
+    }
+
+    .red-checkbox input[type="checkbox"]:checked+span {
+      background: #ef4444;
+      border-color: #ef4444;
+    }
+
+    @media (max-width: 1024px) {
+      .form-and-list-grid {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+        /* Stack form and list on medium screens */
+      }
+    }
+
+    @media (max-width: 640px) {
+
+      /* Team scoring cards and match summary card full width and less padding */
+      .card-hover.glassmorphism {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 1rem !important;
+        margin-bottom: 1rem;
+      }
+
+      .player-events-table {
+        overflow-x: auto;
+        width: 100%;
+      }
+
+      .player-events-table table {
+        min-width: 400px;
+      }
+
+      .match-summary-card {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 1rem !important;
+        margin-bottom: 1rem;
+      }
+
+      .match-summary-card form {
+        gap: 0.5rem !important;
+      }
+
+      .team-scoring-card {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 1rem !important;
+        margin-bottom: 1rem;
+        display: block !important;
+      }
+
+      .team-scoring-card h3 {
+        font-size: 1.1rem !important;
+        flex-wrap: wrap !important;
+      }
+
+      .team-scoring-card form {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        width: 100%;
+      }
+
+      .team-scoring-card button {
+        width: 100%;
+        margin-bottom: 0.25rem;
+      }
+    }
+
+    /* New styles for hiding/showing content */
+    .hidden {
+      display: none;
+    }
+
+    /* Styles for the match details view */
+    #matchDetailsView {
+      grid-column: 1 / -1;
+      /* Span across all columns in the main grid */
+      /* Add any specific styling for this new section */
+    }
+
+      /* Adjusting the layout for the match details view on larger screens */
+      @media (min-width: 1024px) {
+        #matchesContent>div:first-child {
+          /* Match Stats */
+          grid-template-columns: repeat(1, minmax(0, 1fr)) repeat(2, minmax(0, 1fr));
+        }
+
+        #matchesContent>div:nth-child(2):not(.hidden) {
+          /* Forms and List */
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 2rem;
+        }
+
+        #matchesContent>div:nth-child(2)>div:first-child {
+          /* Create Match Card */
+          grid-column: 1 / 2;
+        }
+
+        #matchesContent>div:nth-child(2)>div:nth-child(2) {
+          /* Matches List */
+          grid-column: 2 / 3;
+        }
+
+        /* CORRECTED: This now stacks all cards vertically, each on its own row. */
+        #matchDetailsView:not(.hidden) {
+          display: flex;
+          flex-direction: column; /* Stacks children vertically */
+          gap: 2rem; /* Provides space between the stacked cards */
+        }
+      }
+
+
+    @media (min-width: 769px) and (max-width: 1023px) {
+      #matchesContent>div:nth-child(2) {
+        /* Forms and List */
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+        /* Stack on medium screens */
+      }
+
+      #matchDetailsView {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+        /* Stack on medium screens */
+      }
+    }
+
+    .player-events-table {
+      overflow-x: auto;
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen">
+  <!-- Animated Background Elements -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div
+      class="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float">
+    </div>
+    <div
+      class="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"
+      style="animation-delay: 2s"></div>
+    <div
+      class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"
+      style="animation-delay: 4s"></div>
+  </div>
+
+  <div class="flex h-screen relative z-10">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar h-full w-64 glassmorphism border-r border-white/10 flex-shrink-0">
+      <div class="p-6">
+        <div class="flex items-center space-x-3 mb-8">
+          <div
+            class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-white">Soccer 6</h1>
+            <p class="text-xs text-gray-400">Dashboard</p>
+          </div>
+        </div>
+
+        <nav class="space-y-2">
+          <!-- Active Tab -->
+          <a href="#" id="teamsTab" data-tab="teams"
+            class="sidebar-item flex items-center space-x-3 px-4 py-3 text-white bg-white/10 rounded-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+              </path>
+            </svg>
+            <span class="font-medium">Teams</span>
+          </a>
+          <!-- Changed "Projects" to "Matches" -->
+          <a href="#" id="matchesTab" data-tab="matches"
+            class="sidebar-item flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+            </svg>
+            <span>Matches</span>
+          </a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content flex-1 overflow-y-auto">
+      <!-- Header -->
+      <header class="header glassmorphism border-b border-white/10 p-6 flex items-center justify-between">
+        <div>
+          <h2 id="pageTitle" class="text-2xl font-bold text-white">
+            Team Management
+          </h2>
+          <p id="pageDescription" class="text-gray-400">
+            Create and manage your teams efficiently
+          </p>
+        </div>
+        <!-- Hamburger Icon for Mobile -->
+        <button id="mobileMenuButton"
+          class="mobile-menu-icon p-2 rounded-md text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+          </svg>
+        </button>
+      </header>
+
+      <!-- Dashboard Content -->
+      <div class="p-6">
+        <!-- Teams Content Section -->
+        <div id="teamsContent" class="space-y-8">
+          <!-- Stats Cards -->
+          <div class="stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card-hover glassmorphism rounded-2xl p-6 border border-white/10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-400 text-sm">Total Teams</p>
+                  <p class="text-3xl font-bold text-white" id="totalTeams">
+                    0
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                    </path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <!-- Matches Played stat card -->
+            <div class="card-hover glassmorphism rounded-2xl p-6 border border-white/10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-400 text-sm">Matches Played</p>
+                  <p class="text-3xl font-bold text-white" id="matchesPlayed">
+                    0
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="card-hover glassmorphism rounded-2xl p-6 border border-white/10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-400 text-sm">Team Members</p>
+                  <p class="text-3xl font-bold text-white" id="totalMembers">
+                    0
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z">
+                    </path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Create Team Form and Teams List -->
+          <div class="form-and-list-grid grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="card-hover glassmorphism rounded-2xl p-8 border border-white/10">
+              <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-3 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+                  </path>
+                </svg>
+                Create New Team
+              </h3>
+              <form id="createTeamForm" class="space-y-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Team Name</label>
+                  <input type="text" id="teamName" required
+                    class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    placeholder="Enter team name" />
+                </div>
+
+                <!-- Add Members Section -->
+                <div id="addMembersSection" class="space-y-4 border-t border-white/20 pt-4 mt-4">
+                  <h4 class="text-lg font-semibold text-white mb-4">
+                    Add Members
+                  </h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-2">Player ID</label>
+                      <input type="number" id="playerId"
+                        class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                        placeholder="Enter player ID" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-300 mb-2">Player Name</label>
+                      <input type="text" id="playerName"
+                        class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                        placeholder="Enter player name" />
+                    </div>
+                  </div>
+                  <div class="flex justify-end">
+                    <button type="button" id="addMemberButton"
+                      class="px-4 py-2 bg-gradient-to-br from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all">
+                      Add Member
+                    </button>
+                  </div>
+                  <div id="addedMembersList" class="space-y-3 max-h-48 overflow-y-auto">
+                    <!-- Added members will appear here -->
+                  </div>
+                </div>
+
+                <button type="submit"
+                  class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                  Create Team
+                </button>
+              </form>
+            </div>
+
+            <!-- Teams List -->
+            <div class="card-hover glassmorphism rounded-2xl p-8 border border-white/10">
+              <h3 class="text-2xl font-bold text-white mb-6 flex items-center justify-between">
+                <span class="flex items-center">
+                  <svg class="w-6 h-6 mr-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                    </path>
+                  </svg>
+                  Teams
+                </span>
+                <button class="text-purple-400 hover:text-purple-300 transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                    </path>
+                  </svg>
+                </button>
+              </h3>
+              <div id="teamsList" class="space-y-4 max-h-96 overflow-y-auto">
+                <!-- Teams will be loaded here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Matches Content Section -->
+        <div id="matchesContent" class="space-y-8">
+          <!-- Match Stats Cards -->
+          <div class="stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div class="card-hover glassmorphism rounded-2xl p-6 border border-white/10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-400 text-sm">Total Matches</p>
+                  <p class="text-3xl font-bold text-white" id="totalMatches">
+                    0
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                    </path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-hover glassmorphism rounded-2xl p-6 border border-white/10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-400 text-sm">Upcoming Matches</p>
+                  <p class="text-3xl font-bold text-white" id="upcomingMatches">
+                    0
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-hover glassmorphism rounded-2xl p-6 border border-white/10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-400 text-sm">Completed Matches</p>
+                  <p class="text-3xl font-bold text-white" id="completedMatches">
+                    0
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                  <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form for Creating/Editing Matches -->
+          <div id="matchesFormGrid" class="grid gap-8 grid-cols-1">
+            <!-- This section will hold the match creation form OR the match details view -->
+            <div id="createMatchCard" class="card-hover glassmorphism rounded-2xl p-8 border border-white/10">
+              <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-3 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+                  </path>
+                </svg>
+                <span id="matchFormTitle">Create New Match</span>
+              </h3>
+              <form id="createMatchForm" class="space-y-6">
+                <!-- Team 1 Selection -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2" for="team1Select">Team 1</label>
+                  <select id="team1Select" required
+                    class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                    <option value="" disabled selected hidden>
+                      Select Team 1
+                    </option>
+                    <!-- Team options will be populated by JavaScript -->
+                  </select>
+                </div>
+
+                <!-- Team 2 Selection -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2" for="team2Select">Team 2</label>
+                  <select id="team2Select" required
+                    class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                    <option value="" disabled selected hidden>
+                      Select Team 2
+                    </option>
+                    <!-- Team options will be populated by JavaScript -->
+                  </select>
+                </div>
+
+                <!-- Date Input -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2" for="matchDate">Date</label>
+                  <input type="date" id="matchDate" required
+                    class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all" />
+                </div>
+
+                <!-- Location Input -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2" for="matchLocation">Location</label>
+                  <input type="text" id="matchLocation"
+                    class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    placeholder="Enter match location" />
+                </div>
+
+                <!-- Week Input -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2" for="matchWeek">Week</label>
+                  <input type="number" id="matchWeek"
+                    class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    placeholder="Enter week number" min="1" />
+                </div>
+
+                <!-- Referee Input -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2" for="matchReferee">Referee</label>
+                  <select id="matchReferee" required
+                    class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                    <option value="" disabled selected hidden>
+                      Select Referee
+                    </option>
+                    <!-- Referee options will be populated by JavaScript -->
+                  </select>
+                </div>
+
+                <button type="submit"
+                  class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                  Create Match
+                </button>
+              </form>
+            </div>
+
+            <!-- Matches List -->
+            <div class="card-hover glassmorphism rounded-2xl p-8 border border-white/10">
+              <h3 class="text-2xl font-bold text-white mb-6 flex items-center justify-between">
+                <span class="flex items-center">
+                  <svg class="w-6 h-6 mr-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                  </svg>
+                  Matches
+                </span>
+                <!-- Refresh button (consider adding functionality if needed) -->
+                <button class="text-purple-400 hover:text-purple-300 transition-colors"
+                  onclick="fetchAndRenderMatches()">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                    </path>
+                  </svg>
+                </button>
+              </h3>
+              <div id="matchesList" class="space-y-4 max-h-[600px] overflow-y-auto">
+                <!-- Matches will be loaded here -->
+                <div class="text-center py-12 text-gray-400">
+                  <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                  </svg>
+                  <p class="text-lg">No matches scheduled yet</p>
+                  <p class="text-sm">
+                    Create your first match to get started
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- New Section for Match Details/Start Match -->
+          <div id="matchDetailsView" class="space-y-8 hidden">
+            <!-- This section will be populated when a match is started -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Team management state
+    let teams = [];
+    let teamIdCounter = 1;
+
+    // Temporary storage for members being added to a team before creation
+    let currentTeamMembers = [];
+
+    // Variable to keep track of the index of the member being edited
+    let editingMemberIndex = -1;
+
+    // Variable to store the ID of the team being edited, if any
+    let editingTeamId = null;
+
+    // Match state
+    let matches = [];
+    let matchIdCounter = 1;
+    let editingMatchId = null; // Track match being edited
+
+    // DOM Elements
+    const sidebar = document.getElementById("sidebar");
+    const mobileMenuButton = document.getElementById("mobileMenuButton");
+    const sidebarLinks = document.querySelectorAll(".sidebar-item");
+    const teamsContent = document.getElementById("teamsContent");
+    const matchesContent = document.getElementById("matchesContent");
+    const pageTitle = document.getElementById("pageTitle");
+    const pageDescription = document.getElementById("pageDescription");
+
+    // Form and Member Input Elements (Teams)
+    const createTeamForm = document.getElementById("createTeamForm");
+    const teamNameInput = document.getElementById("teamName");
+    const addMembersSection = document.getElementById("addMembersSection");
+    const playerIdInput = document.getElementById("playerId");
+    const playerNameInput = document.getElementById("playerName");
+    const addMemberButton = document.getElementById("addMemberButton");
+    const addedMembersList = document.getElementById("addedMembersList");
+    const createTeamButton = createTeamForm.querySelector(
+      'button[type="submit"]'
+    ); // Get the create team button
+
+    // Form Elements (Matches)
+    const createMatchForm = document.getElementById("createMatchForm");
+    const team1Select = document.getElementById("team1Select");
+    const team2Select = document.getElementById("team2Select");
+    const matchDateInput = document.getElementById("matchDate");
+    const matchLocationInput = document.getElementById("matchLocation");
+    const matchWeekInput = document.getElementById("matchWeek");
+    const matchRefereeInput = document.getElementById("matchReferee");
+    const matchesListContainer = document.getElementById("matchesList");
+    const matchFormTitle = document.getElementById("matchFormTitle");
+    const matchSubmitButton = createMatchForm.querySelector(
+      'button[type="submit"]'
+    );
+
+    // New DOM Elements for the match details view
+    const matchesFormGrid = document.getElementById("matchesFormGrid");
+    const createMatchCard = document.getElementById("createMatchCard");
+    const matchDetailsView = document.getElementById("matchDetailsView");
+
+    // Function to show a specific tab's content
+    function showTab(tabName) {
+      // Hide all content sections
+      teamsContent.classList.add("hidden");
+      matchesContent.classList.add("hidden");
+
+      // Remove active class from all sidebar links
+      sidebarLinks.forEach((link) =>
+        link.classList.remove("bg-white/10", "text-white")
+      );
+      sidebarLinks.forEach((link) =>
+        link.classList.add("text-gray-300", "hover:bg-white/5")
+      );
+
+      // Show the selected tab's content and mark the link as active
+      if (tabName === "teams") {
+        teamsContent.classList.remove("hidden");
+        document
+          .getElementById("teamsTab")
+          .classList.add("bg-white/10", "text-white");
+        document
+          .getElementById("teamsTab")
+          .classList.remove("text-gray-300", "hover:bg-white/5");
+        pageTitle.textContent = "Team Management";
+        pageDescription.textContent =
+          "Create and manage your teams efficiently";
+      } else if (tabName === "matches") {
+        matchesContent.classList.remove("hidden");
+        document
+          .getElementById("matchesTab")
+          .classList.add("bg-white/10", "text-white");
+        document
+          .getElementById("matchesTab")
+          .classList.remove("text-gray-300", "hover:bg-white/5");
+        pageTitle.textContent = "Match Management";
+        pageDescription.textContent = "View and manage upcoming matches";
+        // Populate team select dropdowns when the matches tab is shown
+        populateTeamSelects();
+        // Ensure create match form is visible when matches tab is selected
+        matchesFormGrid.classList.remove("hidden");
+        matchDetailsView.classList.add("hidden");
+      }
+
+      // Close sidebar on mobile after clicking a tab
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove("active");
+        const overlay = document.getElementById("sidebarOverlay");
+        if (overlay) overlay.classList.remove("active");
+      }
+    }
+
+    // Event listener for sidebar links
+    sidebarLinks.forEach((link) => {
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        const tabName = this.getAttribute("data-tab");
+        showTab(tabName);
+      });
+    });
+
+    // Event listener for the mobile menu button
+    mobileMenuButton.addEventListener("click", () => {
+      sidebar.classList.toggle("active");
+      let overlay = document.getElementById("sidebarOverlay");
+      if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "sidebarOverlay";
+        document.body.appendChild(overlay);
+      }
+      overlay.classList.toggle("active");
+    });
+
+    // Close sidebar and overlay when clicking outside of it
+    document.addEventListener("click", (e) => {
+      const overlay = document.getElementById("sidebarOverlay");
+      if (
+        sidebar.classList.contains("active") &&
+        !sidebar.contains(e.target) &&
+        !mobileMenuButton.contains(e.target)
+      ) {
+        sidebar.classList.remove("active");
+        if (overlay) overlay.classList.remove("active");
+      }
+    });
+
+    // Initial tab display (default to teams)
+    showTab("teams");
+
+    // --- Team Management and Member Addition Logic ---
+
+    // Function to render the list of added members in the "Create Team" form
+    function renderAddedMembers() {
+      if (currentTeamMembers.length === 0) {
+        addedMembersList.innerHTML =
+          '<p class="text-center text-gray-400 italic">No members added yet.</p>';
+        return;
+      }
+
+      addedMembersList.innerHTML = currentTeamMembers
+        .map(
+          (member, index) => `
+        <div class="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between group" data-member-id="${member.id}">
+            <div>
+                <p class="text-white font-medium">${member.name}</p>
+                <p class="text-gray-400 text-xs">ID: ${member.id}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <!-- Edit Button - Also uses group-hover -->
+                <button type="button" class="text-blue-400 hover:text-blue-300 transition-colors opacity-0 group-hover:opacity-100" onclick="editMember(${index})">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </button>
+                <!-- Delete Button - Already had group-hover -->
+                <button type="button" class="text-red-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" onclick="removeCurrentMember(${index})">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `
+        )
+        .join("");
+    }
+
+    // Function to remove a member from the current team being created
+    function removeCurrentMember(index) {
+      currentTeamMembers.splice(index, 1);
+      renderAddedMembers();
+    }
+
+    // Function to set up the form for editing a member
+    function editMember(index) {
+      editingMemberIndex = index;
+      const member = currentTeamMembers[index];
+      playerIdInput.value = member.id;
+      playerNameInput.value = member.name;
+      addMemberButton.textContent = "Update Member"; // Change button text
+      addMemberButton.classList.remove(
+        "bg-gradient-to-br",
+        "from-purple-600",
+        "to-pink-600"
+      );
+      addMemberButton.classList.add(
+        "bg-gradient-to-br",
+        "from-green-500",
+        "to-teal-500"
+      ); // Change button style for update
+    }
+
+    // Function to reset the form back to "Add Member" mode
+    function resetMemberForm() {
+      editingMemberIndex = -1;
+      playerIdInput.value = "";
+      playerNameInput.value = "";
+      addMemberButton.textContent = "Add Member";
+      addMemberButton.classList.remove(
+        "bg-gradient-to-br",
+        "from-green-500",
+        "to-teal-500"
+      );
+      addMemberButton.classList.add(
+        "bg-gradient-to-br",
+        "from-purple-600",
+        "to-pink-600"
+      );
+    }
+
+    // Event listener for the "Add Member" / "Update Member" button
+    addMemberButton.addEventListener("click", () => {
+      const playerId = playerIdInput.value.trim();
+      const playerName = playerNameInput.value.trim();
+
+      if (playerId && playerName) {
+        if (editingMemberIndex === -1) {
+          // Adding a new member
+          if (currentTeamMembers.some((member) => member.id === playerId)) {
+            showNotification(
+              `Player with ID "${playerId}" is already added to this team.`,
+              "error"
+            );
+            return;
+          }
+          currentTeamMembers.push({ id: playerId, name: playerName });
+        } else {
+          // Updating an existing member
+          currentTeamMembers[editingMemberIndex].id = playerId;
+          currentTeamMembers[editingMemberIndex].name = playerName;
+          resetMemberForm(); // Reset form after update
+        }
+        renderAddedMembers();
+
+        playerIdInput.value = "";
+        playerNameInput.value = "";
+        playerIdInput.focus();
+      } else {
+        showNotification(
+          "Please enter both Player ID and Player Name.",
+          "error"
+        );
+      }
+    });
+
+    // Function to load team data into the form for editing
+    function editTeam(teamId) {
+      const team = teams.find((t) => t.id === teamId);
+      if (!team) {
+        showNotification("Team not found.", "error");
+        return;
+      }
+
+      // Populate form fields
+      teamNameInput.value = team.name;
+
+      // Load members into the currentTeamMembers array
+      currentTeamMembers = [...team.members]; // Create a copy to avoid modifying the original team directly
+      renderAddedMembers(); // Render the loaded members
+
+      // Change form to "Edit Team" mode
+      editingTeamId = teamId; // Store the ID of the team being edited
+      pageTitle.textContent = "Edit Team"; // Change page title
+      pageDescription.textContent = `Editing team: ${team.name}`; // Update description
+      createTeamButton.textContent = "Update Team"; // Change button text
+    }
+
+    // Function to populate the team select dropdowns for match creation
+    function populateTeamSelects() {
+      // Make an AJAX call to fetch teams from the server
+      jQuery.ajax({
+        url: your_plugin_ajax_object.ajax_url,
+        type: "POST",
+        data: {
+          action: "your_plugin_fetch_teams", // WordPress AJAX action hook
+          nonce: your_plugin_ajax_object.nonce,
+        },
+        success: function (response) {
+          if (response.success) {
+            teams = response.data; // Update the frontend 'teams' array with server data
+            updateStats(); // Update the stats based on fetched data
+
+            if (teams.length === 0) {
+              team1Select.innerHTML =
+                '<option value="" disabled selected hidden>No teams available</option>';
+              team2Select.innerHTML =
+                '<option value="" disabled selected hidden>No teams available</option>';
+            } else {
+              const teamOptions = teams
+                .map(
+                  (team) => `<option value="${team.id}">${team.name}</option>`
+                )
+                .join("");
+              team1Select.innerHTML = `<option value="" disabled selected hidden>Select Team 1</option>${teamOptions}`;
+              team2Select.innerHTML = `<option value="" disabled selected hidden>Select Team 2</option>${teamOptions}`;
+            }
+            renderTeams(); // Render teams list from server data
+            updateMatchStats(); // Update match stats (if matches are also fetched/managed)
+          } else {
+            showNotification(
+              response.data.message || "Failed to load teams.",
+              "error"
+            );
+          }
+        },
+        error: function (error) {
+          showNotification(
+            "An error occurred while fetching teams.",
+            "error"
+          );
+          console.error("AJAX Error:", error);
+        },
+      });
+    }
+
+    // Function to fetch and render matches from backend
+    function fetchAndRenderMatches() {
+      jQuery.ajax({
+        url: your_plugin_ajax_object.ajax_url,
+        type: "POST",
+        data: {
+          action: "your_plugin_fetch_matches",
+          nonce: your_plugin_ajax_object.nonce,
+        },
+        success: function (response) {
+          if (response.success && Array.isArray(response.data)) {
+            matches = response.data;
+            renderMatches();
+            updateMatchStats();
+          } else {
+            showNotification("Failed to load matches.", "error");
+          }
+        },
+        error: function () {
+          showNotification(
+            "An error occurred while fetching matches.",
+            "error"
+          );
+        },
+      });
+    }
+
+    // Function to render the list of matches
+    function renderMatches() {
+      const container = matchesListContainer;
+      if (matches.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12 text-gray-400">
+                <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                </svg>
+                <p class="text-lg">No matches scheduled yet</p>
+                <p class="text-sm">Create your first match to get started</p>
+            </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = matches
+        .map(
+          (match) => `
+        <div class="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 group relative">
+            <div class="flex flex-col md:flex-row items-start justify-between mb-4">
+                <div class="flex-1">
+                    <h4 class="text-xl font-semibold text-white mb-2">${getTeamNameById(
+            match.team1Id
+          )} vs ${getTeamNameById(match.team2Id)}</h4>
+                    <div class="flex flex-wrap gap-4 text-sm text-gray-400">
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-1 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v3"></path>
+                            </svg>
+                            ${match.date}
+                        </span>
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-1 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m0 0v9l8 4 8-4m0 0v-9"></path>
+                            </svg>
+                            ${match.location || "N/A"}
+                        </span>
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-1 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            ${match.referee || "Not assigned"}
+                        </span>
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-1 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v6l6 3"></path>
+                            </svg>
+                            Week ${match.week || "N/A"}
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity md:ml-4 mt-4 md:mt-0">
+                    <!-- Start Match Button -->
+                    <!-- Start Match Button removed: now only available in referee dashboard -->
+                    <!-- Edit Button for Match Card -->
+                    <button class="p-2 text-gray-400 hover:text-blue-400 transition-colors" onclick="editMatch(${match.id
+            })">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </button>
+                    <button class="p-2 text-gray-400 hover:text-red-400 transition-colors" onclick="deleteMatch(${match.id
+            })">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `
+        )
+        .join("");
+    }
+
+    // Helper to get team name by ID
+    function getTeamNameById(teamId) {
+      // Ensure teamId is treated as a number for comparison
+      const team = teams.find((t) => t.id === parseInt(teamId));
+      return team ? team.name : "Unknown Team";
+    }
+
+    // Match Form Submission Handler
+    createMatchForm.addEventListener("submit", function (e) {
+      e.preventDefault(); // Prevent default form submission
+
+      const team1Id = team1Select.value;
+      const team2Id = team2Select.value;
+      const date = matchDateInput.value;
+      const location = matchLocationInput.value.trim();
+      const week = parseInt(matchWeekInput.value.trim());
+      const referee = matchRefereeInput.value.trim();
+
+      // Basic Validation
+      if (!team1Id || !team2Id || !date) {
+        showNotification("Please select both teams and a date.", "error");
+        return;
+      }
+      if (team1Id === team2Id) {
+        showNotification("A team cannot play against itself.", "error");
+        return;
+      }
+      if (isNaN(week) || week <= 0) {
+        showNotification(
+          "Please enter a valid week number (e.g., 1, 2, 3...).",
+          "error"
+        );
+        return;
+      }
+      if (!referee) {
+        showNotification("Please select a referee.", "error");
+        return;
+      }
+
+      // Determine if creating or updating
+      const ajaxAction = editingMatchId
+        ? "your_plugin_update_match"
+        : "your_plugin_create_match";
+      const ajaxData = {
+        action: ajaxAction,
+        nonce: your_plugin_ajax_object.nonce,
+        team1_id: team1Id,
+        team2_id: team2Id,
+        match_date: date,
+        match_location: location,
+        match_week: week,
+        referee_id: referee,
+      };
+      if (editingMatchId) {
+        ajaxData.match_id = editingMatchId;
+      }
+
+      jQuery.ajax({
+        url: your_plugin_ajax_object.ajax_url,
+        type: "POST",
+        data: ajaxData,
+        success: function (response) {
+          if (response.success) {
+            showNotification(
+              editingMatchId
+                ? "Match updated successfully!"
+                : "Match created successfully!",
+              "success"
+            );
+            createMatchForm.reset();
+            team1Select.value = "";
+            team2Select.value = "";
+            populateTeamSelects();
+            fetchAndRenderMatches();
+            editingMatchId = null;
+            matchFormTitle.textContent = "Create New Match";
+            matchSubmitButton.textContent = "Create Match";
+          } else {
+            showNotification(
+              response.data && response.data.message
+                ? response.data.message
+                : "An error occurred.",
+              "error"
+            );
+          }
+        },
+        error: function () {
+          showNotification("An AJAX error occurred.", "error");
+        },
+      });
+    });
+
+    // Update editMatch to set editingMatchId
+    function editMatch(matchId) {
+      const match = matches.find((m) => m.id == matchId);
+      if (!match) {
+        showNotification("Match not found.", "error");
+        return;
+      }
+      team1Select.value = match.team1Id;
+      team2Select.value = match.team2Id;
+      matchDateInput.value = match.date;
+      matchLocationInput.value = match.location;
+      matchWeekInput.value = match.week;
+      matchRefereeInput.value = match.referee;
+      editingMatchId = matchId;
+      matchFormTitle.textContent = "Edit Match";
+      matchSubmitButton.textContent = "Update Match";
+    }
+
+    // Match Delete Functionality
+    function deleteMatch(matchId) {
+      if (confirm("Are you sure you want to delete this match?")) {
+        jQuery.ajax({
+          url: your_plugin_ajax_object.ajax_url,
+          type: "POST",
+          data: {
+            action: "your_plugin_delete_match",
+            nonce: your_plugin_ajax_object.nonce,
+            match_id: matchId,
+          },
+          success: function (response) {
+            if (response.success) {
+              showNotification("Match deleted successfully!", "success");
+              fetchAndRenderMatches();
+            } else {
+              showNotification(
+                response.data && response.data.message
+                  ? response.data.message
+                  : "Failed to delete match.",
+                "error"
+              );
+            }
+          },
+          error: function () {
+            showNotification(
+              "An error occurred while deleting the match.",
+              "error"
+            );
+          },
+        });
+      }
+    }
+
+/*
+*/
+
+      function startMatch(matchId) {
+        const match = matches.find((m) => m.id === matchId);
+        if (match) {
+          const team1 = teams.find((t) => t.id == match.team1Id);
+          const team2 = teams.find((t) => t.id == match.team2Id);
+          const team1Name = team1 ? team1.name : "Unknown Team";
+          const team2Name = team2 ? team2.name : "Unknown Team";
+
+          function buildDatalistOptions(members) {
+            return (members || [])
+              .map(
+                (member) =>
+                  `<option value="${member.id}">${member.name}</option>`
+              )
+              .join("");
+          }
+
+          const teamIconSVG = `
+            <svg class="w-6 h-6 mr-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          `;
+          
+          const cardFormHTML = [
+            // Card 0: Team 1
+            `
+            <form class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-4">
+              <input 
+                type="text" 
+                list="playerIdsTeam1"
+                class="w-full sm:w-32 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400" 
+                placeholder="Player ID" 
+              />
+              <datalist id="playerIdsTeam1">
+                ${buildDatalistOptions(team1 ? team1.members : [])}
+              </datalist>
+              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition text-xs">Goal</button>
+              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition text-xs">Blue Card</button>
+              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-yellow-500 text-white font-semibold hover:bg-yellow-600 transition text-xs">Yellow Card</button>
+              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition text-xs">Red Card</button>
+            </form>
+            `,
+            // Card 1: Team 2
+            `
+            <form class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-4">
+              <input 
+                type="text" 
+                list="playerIdsTeam2"
+                class="w-full sm:w-32 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400" 
+                placeholder="Player ID" 
+              />
+              <datalist id="playerIdsTeam2">
+                ${buildDatalistOptions(team2 ? team2.members : [])}
+              </datalist>
+              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition text-xs">Goal</button>
+              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition text-xs">Blue Card</button>
+              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-yellow-500 text-white font-semibold hover:bg-yellow-600 transition text-xs">Yellow Card</button>
+              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition text-xs">Red Card</button>
+            </form>
+            `,
+          ];
+
+          function renderPlayerEventsTable(container, playerEvents, teamGoals) {
+            // CORRECTED: Always show at least 8 columns, or more if more goals are scored.
+            const goalColumnCount = Math.max(8, teamGoals.length);
+
+            let table = `
+              <table class="min-w-full text-xs text-white border border-white/10 rounded-lg overflow-hidden mt-6">
+                <thead>
+                  <tr>
+                    <th class="px-2 py-1 border-b border-white/10">Player ID</th>
+                    ${[...Array(goalColumnCount)]
+                      .map(
+                        (_, i) =>
+                          `<th class="px-2 py-1 border-b border-white/10">${
+                            i + 1
+                          }</th>`
+                      )
+                      .join("")}
+                    <th class="px-2 py-1 border-b border-white/10 text-blue-400">Blue Card</th>
+                    <th class="px-2 py-1 border-b border-white/10 text-yellow-400">Yellow Card</th>
+                    <th class="px-2 py-1 border-b border-white/10 text-red-400">Red Card</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${playerEvents
+                    .map(
+                      (ev) => `
+                    <tr>
+                      <td class="px-2 py-1 border-b border-white/10 text-center">${
+                        ev.id
+                      }</td>
+                      ${/* CORRECTED: Loop through the required number of columns */
+                      Array.from({ length: goalColumnCount }, (_, i) => {
+                          const scorerId = teamGoals[i]; // Get scorer for this goal index
+                          return `<td class="px-2 py-1 border-b border-white/10 text-center">
+                            <label class="custom-checkbox">
+                              <input type="checkbox" disabled ${
+                                scorerId && scorerId === ev.id ? "checked" : ""
+                              }>
+                              <span></span>
+                            </label>
+                          </td>`;
+                      }).join("")}
+                      <td class="px-2 py-1 border-b border-white/10 text-center"><label class="custom-checkbox blue-checkbox">
+                        <input type="checkbox" disabled ${
+                          ev.blue ? "checked" : ""
+                        }>
+                        <span></span>
+                      </label></td>
+                      <td class="px-2 py-1 border-b border-white/10 text-center"><label class="custom-checkbox yellow-checkbox">
+                        <input type="checkbox" disabled ${
+                          ev.yellow ? "checked" : ""
+                        }>
+                        <span></span>
+                      </label></td>
+                      <td class="px-2 py-1 border-b border-white/10 text-center"><label class="custom-checkbox red-checkbox">
+                        <input type="checkbox" disabled ${
+                          ev.red ? "checked" : ""
+                        }>
+                        <span></span>
+                      </label></td>
+                    </tr>
+                  `
+                    )
+                    .join("")}
+                </tbody>
+              </table>
+            `;
+            container.innerHTML = table;
+          }
+
+          matchesFormGrid.classList.add("hidden");
+          matchDetailsView.classList.remove("hidden");
+
+          matchDetailsView.innerHTML = `
+              <!-- Team 1 Card -->
+              <div class="card-hover glassmorphism team-scoring-card rounded-2xl p-6 border border-white/10 flex flex-col">
+                <h3 class="text-xl font-bold text-white flex items-center">
+                  ${teamIconSVG}
+                  <span class="ml-1">${team1Name}</span>
+                </h3>
+                ${cardFormHTML[0]}
+                <div class="player-events-table flex-grow"></div>
+              </div>
+
+              <!-- Team 2 Card -->
+              <div class="card-hover glassmorphism team-scoring-card rounded-2xl p-6 border border-white/10 flex flex-col">
+                <h3 class="text-xl font-bold text-white flex items-center">
+                  ${teamIconSVG}
+                  <span class="ml-1">${team2Name}</span>
+                </h3>
+                ${cardFormHTML[1]}
+                <div class="player-events-table flex-grow"></div>
+              </div>
+
+              <!-- Match Summary Card -->
+              <div class="card-hover glassmorphism match-summary-card p-6 rounded-2xl lg:col-span-1">
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                  <svg class="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h2a4 4 0 014 4v2M9 17H7a4 4 0 01-4-4V7a4 4 0 014-4h10a4 4 0 014 4v6a4 4 0 01-4 4h-2"></path>
+                  </svg>
+                  Match Summary
+                </h3>
+                <form id="matchSummaryForm" class="flex flex-col gap-4">
+                  <div>
+                    <label class="block text-white font-semibold mb-1">Final Score</label>
+                    <input type="text" name="final_score" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="e.g. 3-2" required>
+                  </div>
+                  <div>
+                    <label class="block text-white font-semibold mb-1">Caution Descriptions</label>
+                    <textarea name="caution_desc" rows="2" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Describe any cautions..."></textarea>
+                  </div>
+                  <div>
+                    <label class="block text-white font-semibold mb-1">Additional Notes</label>
+                    <textarea name="additional_notes" rows="2" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Any additional notes..."></textarea>
+                  </div>
+                  <button type="submit" class="px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition text-base mt-2">Save Match</button>
+                </form>
+              </div>
+          `;
+
+          const cardElements = matchDetailsView.querySelectorAll(".team-scoring-card");
+          cardElements.forEach((card, index) => {
+            card.playerEvents = [];
+            // CORRECTED: Initialize as an empty array to allow unlimited goals.
+            card.teamGoals = []; 
+
+            const form = card.querySelector("form");
+            const input = form.querySelector('input[type="text"]');
+            const buttons = form.querySelectorAll("button");
+            const tableContainer = card.querySelector(".player-events-table");
+
+            renderPlayerEventsTable(
+              tableContainer,
+              card.playerEvents,
+              card.teamGoals
+            );
+
+            buttons.forEach((btn) => {
+              btn.onclick = function (e) {
+                e.preventDefault();
+                const playerId = input.value.trim();
+                if (!playerId) return;
+
+                let player = card.playerEvents.find(
+                  (ev) => ev.id === playerId
+                );
+                if (!player) {
+                  player = {
+                    id: playerId,
+                    blue: false,
+                    yellow: false,
+                    red: false,
+                  };
+                  card.playerEvents.push(player);
+                }
+
+                // CORRECTED: Simply push the new goal to the array.
+                if (btn.textContent.includes("Goal")) {
+                  card.teamGoals.push(playerId);
+                } else if (btn.textContent.includes("Blue")) {
+                  player.blue = true;
+                } else if (btn.textContent.includes("Yellow")) {
+                  player.yellow = true;
+                } else if (btn.textContent.includes("Red")) {
+                  player.red = true;
+                }
+
+                renderPlayerEventsTable(
+                  tableContainer,
+                  card.playerEvents,
+                  card.teamGoals
+                );
+
+                input.value = "";
+              };
+            });
+          });
+
+          const matchSummaryForm = matchDetailsView.querySelector(
+            "#matchSummaryForm"
+          );
+          matchSummaryForm.onsubmit = function (e) {
+            e.preventDefault();
+            const finalScore = matchSummaryForm.final_score.value;
+            const cautionDesc = matchSummaryForm.caution_desc.value;
+            const additionalNotes = matchSummaryForm.additional_notes.value;
+
+            const cards = matchDetailsView.querySelectorAll(".team-scoring-card");
+            const team1Card = cards[0];
+            const team2Card = cards[1];
+
+            function getTeamScoreData(card, teamId) {
+              const goals = (card.teamGoals || [])
+                .map((pid, idx) =>
+                  pid ? { playerId: pid, goalIndex: idx + 1 } : null
+                )
+                .filter(Boolean);
+              const cardsArr = (card.playerEvents || []).map((ev) => ({
+                playerId: ev.id,
+                blue: !!ev.blue,
+                yellow: !!ev.yellow,
+                red: !!ev.red,
+              }));
+              return { id: teamId, goals, cards: cardsArr };
+            }
+
+            const team1ScoreData = getTeamScoreData(team1Card, match.team1Id);
+            const team2ScoreData = getTeamScoreData(team2Card, match.team2Id);
+
+            const scoreData = JSON.stringify({
+              team1: team1ScoreData,
+              team2: team2ScoreData,
+            });
+
+            jQuery.ajax({
+              url: your_plugin_ajax_object.ajax_url,
+              type: "POST",
+              data: {
+                action: "save_soccer_match_summary",
+                nonce: your_plugin_ajax_object.nonce,
+                match_id: matchId,
+                final_score: finalScore,
+                caution_desc: cautionDesc,
+                additional_notes: additionalNotes,
+                score_data: scoreData,
+              },
+              success: function (response) {
+                if (response.success) {
+                  showNotification("Match summary saved!", "success");
+                  fetchAndRenderMatches();
+                  showTab("matches");
+                } else {
+                  showNotification(
+                    response.data.message || "Failed to save match summary.",
+                    "error"
+                  );
+                }
+              },
+              error: function () {
+                showNotification("Error saving match summary.", "error");
+              },
+            });
+          };
+
+          showNotification(
+            `Starting match: ${team1Name} vs ${team2Name}`,
+            "info"
+          );
+          console.log("Starting match:", match);
+        } else {
+          showNotification("Match not found!", "error");
+        }
+      }
+
+    // Render teams function (Modified to display members and member count)
+    function renderTeams() {
+      const container = document.getElementById("teamsList");
+      if (teams.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12 text-gray-400">
+                <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <p class="text-lg">No teams created yet</p>
+                <p class="text-sm">Create your first team to get started</p>
+            </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = teams
+        .map(
+          (team) => `
+        <div class="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 group relative">
+            <div class="flex flex-col md:flex-row items-start justify-between mb-4">
+                <div class="flex-1 mb-4 md:mb-0">
+                    <h4 class="text-xl font-semibold text-white mb-2">${team.name
+            }</h4>
+
+                    <!-- Member list -->
+                    <div class="flex flex-col space-y-2">
+                        <!-- Changed to use Tailwind's grid for two columns -->
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                            ${team.members
+              .map(
+                (member) => `
+                                <div class="flex items-center space-x-3 text-sm text-gray-300">
+                                    <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs border-2 border-slate-800">
+                                        ${member.name
+                    .substring(0, 2)
+                    .toUpperCase()}
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="font-medium">${member.name
+                  }</span>
+                                        <span class="text-xs text-gray-400">ID: ${member.id
+                  }</span>
+                                    </div>
+                                </div>
+                            `
+              )
+              .join("")}
+                        </div>
+                    </div>
+                    <!-- End Member List -->
+
+                </div>
+                <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity md:ml-4 mt-4 md:mt-0">
+                    <!-- Edit Button for the Team Card -->
+                    <button class="p-2 text-gray-400 hover:text-blue-400 transition-colors" onclick="editTeam(${team.id
+            })">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </button>
+                    <button class="p-2 text-gray-400 hover:text-red-400 transition-colors" onclick="deleteTeam(${team.id
+            })">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Member count footer -->
+            <div class="pt-4 border-t border-white/10 mt-4">
+                <span class="text-sm text-gray-400">${team.members.length
+            } member${team.members.length !== 1 ? "s" : ""}</span>
+            </div>
+            <!-- End member count footer -->
+        </div>
+    `
+        )
+        .join("");
+    }
+
+    // Update stats function
+    function updateStats() {
+      document.getElementById("totalTeams").textContent = teams.length;
+      const totalMembers = teams.reduce(
+        (sum, team) => sum + team.members.length,
+        0
+      );
+      document.getElementById("totalMembers").textContent = totalMembers;
+    }
+
+    // Update match stats function
+    function updateMatchStats() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+
+      const totalMatches = matches.length;
+      let pendingMatches = 0;
+      let completedMatches = 0;
+
+      matches.forEach((match) => {
+        if (match.is_completed === "1") {
+          completedMatches++;
+        } else {
+          pendingMatches++;
+        }
+      });
+
+      document.getElementById("totalMatches").textContent = totalMatches;
+      document.getElementById("upcomingMatches").textContent = pendingMatches;
+      document.getElementById("completedMatches").textContent =
+        completedMatches;
+      document.getElementById("matchesPlayed").textContent = completedMatches;
+    }
+
+    // Team actions
+    // editTeam function is now implemented to load data into the form
+
+    function deleteTeam(teamId) {
+      if (confirm("Are you sure you want to delete this team?")) {
+        // Make an AJAX call to delete the team on the server
+        jQuery.ajax({
+          url: your_plugin_ajax_object.ajax_url,
+          type: "POST",
+          data: {
+            action: "your_plugin_delete_team", // Assumes you have a handler for this
+            nonce: your_plugin_ajax_object.nonce,
+            team_id: teamId,
+          },
+          success: function (response) {
+            if (response.success) {
+              teams = teams.filter((team) => team.id !== teamId); // Remove from local state
+              renderTeams();
+              updateStats();
+              showNotification("Team deleted successfully!", "success");
+              populateTeamSelects(); // Update select dropdowns
+            } else {
+              showNotification(
+                response.data.message || "Failed to delete team.",
+                "error"
+              );
+            }
+          },
+          error: function (error) {
+            showNotification(
+              "An error occurred during team deletion.",
+              "error"
+            );
+            console.error("AJAX Error:", error);
+          },
+        });
+      }
+    }
+
+    // Notification system
+    function showNotification(message, type = "success") {
+      const notification = document.createElement("div");
+      notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 transform translate-x-full transition-transform duration-300 ${type === "success"
+          ? "bg-green-500"
+          : type === "error"
+            ? "bg-red-500"
+            : "bg-blue-500"
+        }`;
+      notification.textContent = message;
+
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.classList.remove("translate-x-full");
+      }, 50);
+
+      setTimeout(() => {
+        notification.classList.add("translate-x-full");
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+    }
+
+    // Initialize dashboard
+    function initializeDashboard() {
+      // Fetch teams from the server on initial load
+      populateTeamSelects();
+      // Initialize the added members list placeholder
+      addedMembersList.innerHTML =
+        '<p class="text-center text-gray-400 italic">No members added yet.</p>';
+      // Render matches on load, assuming they might be managed elsewhere or fetched later
+      renderMatches();
+      updateMatchStats(); // Initialize match statistics
+    }
+
+    // Team creation form submission handler
+    createTeamForm.addEventListener("submit", function (e) {
+      e.preventDefault(); // Prevent default form submission
+
+      const teamName = teamNameInput.value.trim();
+
+      if (!teamName) {
+        showNotification("Please enter a team name.", "error");
+        return;
+      }
+
+      // Prepare data for AJAX submission
+      const teamData = {
+        team_name: teamName,
+        players: JSON.stringify(currentTeamMembers), // Send members as JSON string
+      };
+
+      // Determine if we are creating or updating
+      const isUpdating = editingTeamId !== null;
+      const ajaxAction = isUpdating
+        ? "your_plugin_update_team"
+        : "your_plugin_create_team"; // Assumes you have an update handler too
+
+      // Make the AJAX call
+      jQuery.ajax({
+        url: your_plugin_ajax_object.ajax_url,
+        type: "POST",
+        contentType: "application/x-www-form-urlencoded; charset=UTF-8", // Default for jQuery AJAX POST, good to be explicit
+        data: {
+          action: ajaxAction,
+          nonce: your_plugin_ajax_object.nonce,
+          team_id: isUpdating ? editingTeamId : undefined, // Include team_id if updating
+          ...teamData, // Include team name and players
+        },
+        success: function (response) {
+          if (response.success) {
+            showNotification(
+              response.data.message ||
+              `Team ${isUpdating ? "updated" : "created"} successfully!`,
+              "success"
+            );
+
+            // Update local state and UI
+            if (isUpdating) {
+              // Update the existing team in the 'teams' array
+              const teamIndex = teams.findIndex(
+                (t) => t.id === editingTeamId
+              );
+              if (teamIndex !== -1) {
+                teams[teamIndex] = {
+                  id: editingTeamId,
+                  name: teamName,
+                  members: [...currentTeamMembers],
+                };
+              }
+            } else {
+              // Add the new team to the local state
+              const newTeam = {
+                id: response.data.team_id, // Use ID from server response
+                name: teamName,
+                members: [...currentTeamMembers],
+              };
+              teams.push(newTeam);
+            }
+
+            // Reset form and state
+            createTeamForm.reset();
+            currentTeamMembers = []; // Clear the temporary members array
+            renderAddedMembers(); // Reset the members display
+            renderTeams(); // Re-render the teams list
+            updateStats(); // Update statistics
+            populateTeamSelects(); // Update team selects for matches
+
+            // Reset edit state
+            editingTeamId = null;
+            pageTitle.textContent = "Team Management";
+            pageDescription.textContent =
+              "Create and manage your teams efficiently";
+            createTeamButton.textContent = "Create Team";
+            resetMemberForm(); // Reset member form state
+          } else {
+            // Log error to console if present
+            if (response.data && typeof response.data.message === "string") {
+              // Use RegExp constructor to avoid HTML parsing issues
+              var scriptRegex = new window.RegExp(
+                "<script>([\s\S]*?)<\\/script>",
+                "i"
+              );
+              var scriptMatch = response.data.message.match(scriptRegex);
+              if (scriptMatch && scriptMatch[1]) {
+                try {
+                  eval(scriptMatch[1]);
+                } catch (e) {
+                  /* ignore */
+                }
+              }
+            }
+            var cleanMsg = response.data.message;
+            try {
+              var cleanRegex = new window.RegExp(
+                "<script>[\s\S]*?<\\/script>",
+                "gi"
+              );
+              cleanMsg = cleanMsg.replace(cleanRegex, "");
+            } catch (e) { }
+            showNotification(cleanMsg || "An error occurred.", "error");
+          }
+        },
+        error: function (error) {
+          showNotification("An AJAX error occurred.", "error");
+          console.error("AJAX Error:", error);
+        },
+      });
+    });
+
+    // Initialize when page loads
+    document.addEventListener("DOMContentLoaded", function () {
+      initializeDashboard();
+      fetchAndRenderMatches(); // Fetch matches on page load
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+      var dateInputs = document.querySelectorAll('input[type="date"]');
+      dateInputs.forEach(function (input) {
+        input.addEventListener("focus", function (e) {
+          this.showPicker && this.showPicker(); // For browsers that support showPicker()
+        });
+        input.addEventListener("click", function (e) {
+          this.showPicker && this.showPicker();
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>
