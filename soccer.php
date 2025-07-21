@@ -47,16 +47,17 @@ function your_plugin_enqueue_assets()
 add_action('wp_enqueue_scripts', 'your_plugin_enqueue_assets');
 // Hook into 'admin_enqueue_scripts' if you also want these assets loaded in the WordPress admin area
 add_action('admin_enqueue_scripts', 'your_plugin_enqueue_assets');
-function your_plugin_enqueue_tailwind_play_cdn() {
+function your_plugin_enqueue_tailwind_play_cdn()
+{
     // Check if the current page should load the dashboard (e.g., if shortcode is present)
     // You might want to remove this conditional if you truly want it on all pages,
     // but for a dashboard, it's usually specific.
     global $post;
     if (
-        ! is_a( $post, 'WP_Post' ) ||
+        ! is_a($post, 'WP_Post') ||
         (
-            ! has_shortcode( $post->post_content, 'admin_dashboard_widget' ) &&
-            ! has_shortcode( $post->post_content, 'start_match_shortcode' )
+            ! has_shortcode($post->post_content, 'admin_dashboard_widget') &&
+            ! has_shortcode($post->post_content, 'start_match_shortcode')
         )
     ) {
         return;
@@ -70,7 +71,7 @@ function your_plugin_enqueue_tailwind_play_cdn() {
         true // Load script in the footer (recommended for Play CDN)
     );
 }
-add_action( 'wp_enqueue_scripts', 'your_plugin_enqueue_tailwind_play_cdn' );
+add_action('wp_enqueue_scripts', 'your_plugin_enqueue_tailwind_play_cdn');
 // --- 3. Register Custom Post Type: Team Management ---
 function your_plugin_register_team_cpt()
 {
@@ -177,6 +178,58 @@ function your_plugin_handle_create_team()
         return;
     }
 
+    // --- Handle Jersey Image Upload ---
+    if (!isset($_FILES['team_jersey_image']) || $_FILES['team_jersey_image']['error'] !== UPLOAD_ERR_OK) {
+        $error_detail = '';
+        if (!isset($_FILES['team_jersey_image'])) {
+            $error_detail = 'File not received by PHP. $_FILES is: ' . print_r($_FILES, true);
+        } else {
+            $error_code = $_FILES['team_jersey_image']['error'];
+            $error_detail = 'Upload error code: ' . $error_code . '. See https://www.php.net/manual/en/features.file-upload.errors.php';
+            $error_detail .= ' | $_FILES: ' . print_r($_FILES['team_jersey_image'], true);
+        }
+        wp_send_json_error(array('message' => 'Team jersey image is required. Debug: ' . $error_detail));
+        return;
+    }
+
+    // WordPress environment setup for file uploads
+    if (!function_exists('wp_handle_upload')) {
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+    }
+
+    $uploadedfile = $_FILES['team_jersey_image'];
+    $upload_overrides = array('test_form' => false);
+
+    // Handle the upload
+    $movefile = wp_handle_upload($uploadedfile, $upload_overrides);
+    $attach_id = 0;
+
+    if ($movefile && !isset($movefile['error'])) {
+        // File is uploaded successfully.
+        $filename = basename($movefile['url']);
+        $attachment = array(
+            'guid'           => $movefile['url'],
+            'post_mime_type' => $movefile['type'],
+            'post_title'     => preg_replace('/\.[^.]+$/', '', $filename),
+            'post_content'   => '',
+            'post_status'    => 'inherit'
+        );
+
+        // Insert the attachment.
+        $attach_id = wp_insert_attachment($attachment, $movefile['file']);
+
+        // Generate attachment metadata
+        if (!function_exists('wp_generate_attachment_metadata')) {
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+        }
+        $attach_data = wp_generate_attachment_metadata($attach_id, $movefile['file']);
+        wp_update_attachment_metadata($attach_id, $attach_data);
+    } else {
+        // File upload failed.
+        wp_send_json_error(array('message' => 'Error uploading jersey image: ' . $movefile['error']));
+        return;
+    }
+
     // --- Data Retrieval and Sanitization ---
     // Get team name and sanitize it
     $team_name = isset($_POST['team_name']) ? sanitize_text_field($_POST['team_name']) : '';
@@ -269,18 +322,24 @@ function your_plugin_handle_create_team()
 
     // Check if post insertion was successful
     if (is_wp_error($post_id)) {
+        if ($attach_id) {
+            wp_delete_attachment($attach_id, true);
+        }
         wp_send_json_error(array('message' => sprintf(__('Error creating team: %s', YOUR_PLUGIN_SLUG), $post_id->get_error_message())));
     } else {
-        // --- Save Player Data as Post Meta ---
+        // --- Save Player Data and Jersey Image as Post Meta ---
         // Store the validated players array as a JSON string in post meta
         update_post_meta($post_id, 'team_players', json_encode($valid_players));
+        update_post_meta($post_id, 'team_jersey_image_id', $attach_id);
+
 
         // --- Send Success Response ---
         wp_send_json_success(array(
             'message' => __('Team created successfully!', YOUR_PLUGIN_SLUG),
             'team_id' => $post_id, // The ID of the newly created CPT post
             'team_name' => $team_name,
-            'players' => $valid_players // Send back the validated players for JS to potentially use
+            'players' => $valid_players, // Send back the validated players for JS to potentially use
+            'jersey_image_url' => wp_get_attachment_url($attach_id)
         ));
     }
 }
@@ -386,11 +445,14 @@ function your_plugin_fetch_teams_handler()
             if (! is_array($players)) {
                 $players = []; // Ensure it's always an array
             }
+            $jersey_image_id = get_post_meta($post_id, 'team_jersey_image_id', true);
+            $jersey_image_url = $jersey_image_id ? wp_get_attachment_url($jersey_image_id) : '';
 
             $teams_data[] = array(
                 'id'      => $post_id,
                 'name'    => $team_name,
                 'members' => $players, // Include members in the data sent to JS
+                'jersey_image_url' => $jersey_image_url
             );
         }
         wp_reset_postdata();
@@ -412,6 +474,47 @@ function your_plugin_handle_update_team()
     $team_id = isset($_POST['team_id']) ? intval($_POST['team_id']) : 0;
     $team_name = isset($_POST['team_name']) ? sanitize_text_field($_POST['team_name']) : '';
     $players_input_string = isset($_POST['players']) ? $_POST['players'] : '[]';
+
+    $attach_id = null;
+    // --- Handle Jersey Image Upload (if provided) ---
+    if (isset($_FILES['team_jersey_image']) && $_FILES['team_jersey_image']['error'] === UPLOAD_ERR_OK) {
+        if (!function_exists('wp_handle_upload')) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+        }
+
+        $uploadedfile = $_FILES['team_jersey_image'];
+        $upload_overrides = array('test_form' => false);
+        $movefile = wp_handle_upload($uploadedfile, $upload_overrides);
+
+        if ($movefile && !isset($movefile['error'])) {
+            $filename = basename($movefile['url']);
+            $attachment = array(
+                'guid'           => $movefile['url'],
+                'post_mime_type' => $movefile['type'],
+                'post_title'     => preg_replace('/\.[^.]+$/', '', $filename),
+                'post_content'   => '',
+                'post_status'    => 'inherit'
+            );
+            $attach_id = wp_insert_attachment($attachment, $movefile['file'], $team_id);
+
+            if (!function_exists('wp_generate_attachment_metadata')) {
+                require_once(ABSPATH . 'wp-admin/includes/image.php');
+            }
+            $attach_data = wp_generate_attachment_metadata($attach_id, $movefile['file']);
+            wp_update_attachment_metadata($attach_id, $attach_data);
+
+            // Delete old attachment if it exists
+            $old_attach_id = get_post_meta($team_id, 'team_jersey_image_id', true);
+            if ($old_attach_id && $old_attach_id != $attach_id) {
+                wp_delete_attachment($old_attach_id, true);
+            }
+        } else {
+            wp_send_json_error(array('message' => 'Error uploading new jersey image: ' . $movefile['error']));
+            return;
+        }
+    }
+
+
     $players_data = json_decode($players_input_string, true);
     if (json_last_error() !== JSON_ERROR_NONE) {
         $players_input_string_decoded = stripslashes($players_input_string);
@@ -448,14 +551,25 @@ function your_plugin_handle_update_team()
     );
     $result = wp_update_post($post_data, true);
     if (is_wp_error($result)) {
+        if ($attach_id) {
+            wp_delete_attachment($attach_id, true);
+        }
         wp_send_json_error(array('message' => 'Error updating team: ' . $result->get_error_message()));
     } else {
         update_post_meta($team_id, 'team_players', json_encode($valid_players));
+        if ($attach_id) {
+            update_post_meta($team_id, 'team_jersey_image_id', $attach_id);
+        }
+
+        $jersey_image_id = get_post_meta($team_id, 'team_jersey_image_id', true);
+        $jersey_image_url = $jersey_image_id ? wp_get_attachment_url($jersey_image_id) : '';
+
         wp_send_json_success(array(
             'message' => 'Team updated successfully!',
             'team_id' => $team_id,
             'team_name' => $team_name,
-            'players' => $valid_players
+            'players' => $valid_players,
+            'jersey_image_url' => $jersey_image_url
         ));
     }
 }
@@ -520,7 +634,7 @@ function your_plugin_fetch_referee_matches_handler()
     }
 
     $current_user_id = get_current_user_id();
-    
+
     // Query matches where the current user is assigned as referee (both completed and incomplete)
     $matches_query = new WP_Query(array(
         'post_type'      => YOUR_MATCH_CPT_SLUG,
@@ -551,12 +665,21 @@ function your_plugin_fetch_referee_matches_handler()
             $team1_name = get_the_title($team1_id);
             $team2_name = get_the_title($team2_id);
 
+            // Get team jersey images
+            $team1_jersey_id = get_post_meta($team1_id, 'team_jersey_image_id', true);
+            $team1_jersey_url = $team1_jersey_id ? wp_get_attachment_url($team1_jersey_id) : '';
+            $team2_jersey_id = get_post_meta($team2_id, 'team_jersey_image_id', true);
+            $team2_jersey_url = $team2_jersey_id ? wp_get_attachment_url($team2_jersey_id) : '';
+
+
             $matches_data[] = array(
                 'id' => $post_id,
                 'team1Id' => $team1_id,
                 'team2Id' => $team2_id,
                 'team1Name' => $team1_name ? $team1_name : 'Team ' . $team1_id,
                 'team2Name' => $team2_name ? $team2_name : 'Team ' . $team2_id,
+                'team1Jersey' => $team1_jersey_url,
+                'team2Jersey' => $team2_jersey_url,
                 'date' => $match_date,
                 'location' => $match_location,
                 'week' => $match_week,
@@ -722,15 +845,28 @@ add_action('wp_ajax_save_soccer_match_summary', function () {
     $caution_desc = sanitize_textarea_field($_POST['caution_desc']);
     $additional_notes = sanitize_textarea_field($_POST['additional_notes']);
     $score_data = isset($_POST['score_data']) ? wp_unslash($_POST['score_data']) : '';
+    $first_half_fouls = isset($_POST['first_half_fouls']) ? sanitize_text_field($_POST['first_half_fouls']) : '';
+    $second_half_fouls = isset($_POST['second_half_fouls']) ? sanitize_text_field($_POST['second_half_fouls']) : '';
 
     // Save as post meta or update post content as needed
     update_post_meta($match_id, 'final_score', $final_score);
     update_post_meta($match_id, 'caution_desc', $caution_desc);
     update_post_meta($match_id, 'additional_notes', $additional_notes);
+    update_post_meta($match_id, 'first_half_fouls', $first_half_fouls);
+    update_post_meta($match_id, 'second_half_fouls', $second_half_fouls);
     if ($score_data) {
         update_post_meta($match_id, 'score_data', $score_data);
     }
     update_post_meta($match_id, 'is_completed', '1'); // Mark as completed
+
+    // Save referee name as post meta (if not already saved)
+    $referee_id = get_post_meta($match_id, '_referee_id', true);
+    if ($referee_id) {
+        $user = get_userdata($referee_id);
+        if ($user) {
+            update_post_meta($match_id, 'referee_name', $user->display_name);
+        }
+    }
 
     wp_send_json_success();
 });
@@ -791,22 +927,26 @@ function get_team_data_with_members($team_id)
     $team_post = get_post($team_id);
     if (!$team_post || $team_post->post_type !== YOUR_TEAM_CPT_SLUG) {
         error_log("Team not found or wrong post type for ID: $team_id");
-        return array('name' => 'Unknown Team', 'members' => array());
+        return array('name' => 'Unknown Team', 'members' => array(), 'jersey_image_url' => '');
     }
 
     $team_name = $team_post->post_title;
     error_log("Team found: $team_name (ID: $team_id)");
-    
+
+    // Get team jersey image
+    $jersey_image_id = get_post_meta($team_id, 'team_jersey_image_id', true);
+    $jersey_image_url = $jersey_image_id ? wp_get_attachment_url($jersey_image_id) : '';
+
     // Get team players from post meta (stored as 'team_players', not 'team_members')
     $team_players_json = get_post_meta($team_id, 'team_players', true);
     error_log("Team players JSON for team $team_id: " . $team_players_json);
-    
+
     $members = array();
-    
+
     if (!empty($team_players_json)) {
         $team_players = json_decode($team_players_json, true);
         error_log("Decoded team players for team $team_id: " . print_r($team_players, true));
-        
+
         if (is_array($team_players)) {
             foreach ($team_players as $player) {
                 if (isset($player['id']) && isset($player['name'])) {
@@ -820,19 +960,20 @@ function get_team_data_with_members($team_id)
     }
 
     error_log("Final members array for team $team_id: " . print_r($members, true));
-    
+
     return array(
         'name' => $team_name,
-        'members' => $members
+        'members' => $members,
+        'jersey_image_url' => $jersey_image_url
     );
 }
 
-// // Dequeue Astra theme styles on page ID 360 using a named function
-// function custom_dequeue_astra_styles_on_specific_page()
-// {
-//     if (is_page('admin-dashboard') || is_page('refree-dashboard')) {
-//         wp_dequeue_style('astra-theme-css');
-//         wp_deregister_style('astra-theme-css');
-//     }
-// }
-// add_action('wp_enqueue_scripts', 'custom_dequeue_astra_styles_on_specific_page', 100);
+// Dequeue Astra theme styles on page ID 360 using a named function
+function custom_dequeue_astra_styles_on_specific_page()
+{
+    if (is_page('admin-dashboard') || is_page('referee-dashboard')) {
+        wp_dequeue_style('astra-theme-css');
+        wp_deregister_style('astra-theme-css');
+    }
+}
+add_action('wp_enqueue_scripts', 'custom_dequeue_astra_styles_on_specific_page', 100);

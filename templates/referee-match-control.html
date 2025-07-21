@@ -1,479 +1,755 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Referee Dashboard - Start Match</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: "#6366f1",
-            secondary: "#8b5cf6",
+  <head>
+    <meta charset="8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Referee Dashboard - Start Match</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#6366f1",
+              secondary: "#8b5cf6",
+            },
           },
         },
-      },
-    };
-  </script>
-  <style>
-    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
-    body { font-family: "Inter", sans-serif; }
-    .glassmorphism { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
-    .card-hover { transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
-    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
-    .hidden { display: none; }
+      };
+    </script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .glassmorphism {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .card-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      }
+      .hidden {
+        display: none;
+      }
 
-    /* --- STYLES COPIED FROM ADMIN DASHBOARD & CUSTOM DATALIST STYLING --- */
-    .custom-checkbox {
-      display: inline-block;
-      position: relative;
-      width: 18px;
-      height: 18px;
-    }
+      /* --- STYLES COPIED FROM ADMIN DASHBOARD & CUSTOM DATALIST STYLING --- */
+      .custom-checkbox {
+        display: inline-block;
+        position: relative;
+        width: 18px;
+        height: 18px;
+      }
 
-    .custom-checkbox input[type="checkbox"] {
-      opacity: 0;
-      width: 18px;
-      height: 18px;
-      margin: 0;
-      position: absolute;
-      left: 0;
-      top: 0;
-      z-index: 2;
-      cursor: pointer;
-    }
+      .custom-checkbox input[type="checkbox"] {
+        opacity: 0;
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 2;
+        cursor: pointer;
+      }
 
-    .custom-checkbox span {
-      display: block;
-      width: 18px;
-      height: 18px;
-      border-radius: 4px;
-      border: 2px solid #22c55e;
-      /* Default green */
-      background: transparent;
-      box-sizing: border-box;
-      position: absolute;
-      left: 0;
-      top: 0;
-      z-index: 1;
-      pointer-events: none;
-    }
+      .custom-checkbox span {
+        display: block;
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        border: 2px solid #22c55e;
+        /* Default green */
+        background: transparent;
+        box-sizing: border-box;
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 1;
+        pointer-events: none;
+      }
 
-    /* Green (Goal) */
-    .custom-checkbox input[type="checkbox"]:checked+span {
-      background: #22c55e;
-      border-color: #22c55e;
-    }
+      /* Green (Goal) */
+      .custom-checkbox input[type="checkbox"]:checked + span {
+        background: #22c55e;
+        border-color: #22c55e;
+      }
 
-    .custom-checkbox input[type="checkbox"]:checked+span::after {
-      content: "";
-      position: absolute;
-      left: 4px;
-      top: 0px;
-      width: 5px;
-      height: 10px;
-      border: solid #fff;
-      border-width: 0 2px 2px 0;
-      transform: rotate(45deg);
-      pointer-events: none;
-    }
+      .custom-checkbox input[type="checkbox"]:checked + span::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 0px;
+        width: 5px;
+        height: 10px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        pointer-events: none;
+      }
 
-    /* Blue Card */
-    .blue-checkbox span {
-      border-color: #3b82f6;
-    }
+      /* Blue Card */
+      .blue-checkbox span {
+        border-color: #3b82f6;
+      }
 
-    .blue-checkbox input[type="checkbox"]:checked+span {
-      background: #3b82f6;
-      border-color: #3b82f6;
-    }
+      .blue-checkbox input[type="checkbox"]:checked + span {
+        background: #3b82f6;
+        border-color: #3b82f6;
+      }
 
-    /* Yellow Card */
-    .yellow-checkbox span {
-      border-color: #facc15;
-    }
+      /* Yellow Card */
+      .yellow-checkbox span {
+        border-color: #facc15;
+      }
 
-    .yellow-checkbox input[type="checkbox"]:checked+span {
-      background: #facc15;
-      border-color: #facc15;
-    }
+      .yellow-checkbox input[type="checkbox"]:checked + span {
+        background: #facc15;
+        border-color: #facc15;
+      }
 
-    /* Red Card */
-    .red-checkbox span {
-      border-color: #ef4444;
-    }
+      /* Red Card */
+      .red-checkbox span {
+        border-color: #ef4444;
+      }
 
-    .red-checkbox input[type="checkbox"]:checked+span {
-      background: #ef4444;
-      border-color: #ef4444;
-    }
-     .player-events-table {
-      overflow-x: auto;
-    }
+      .red-checkbox input[type="checkbox"]:checked + span {
+        background: #ef4444;
+        border-color: #ef4444;
+      }
+      .player-events-table {
+        overflow-x: auto;
+      }
 
-    /* Hide number input spinners */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    input[type="number"] {
-      -moz-appearance: textfield;
-    }
+      /* Hide number input spinners */
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      input[type="number"] {
+        -moz-appearance: textfield;
+      }
 
-    /* Custom Datalist Styling for dropdown appearance */
-    /* Note: Datalist styling can be inconsistent across browsers */
-    datalist {
-      background: #2d3748; /* Dark background for the dropdown itself */
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
-      overflow: hidden; /* Helps with rounded corners for the overall box */
-    }
+      /* Custom Datalist Styling for dropdown appearance */
+      /* Note: Datalist styling can be inconsistent across browsers */
+      datalist {
+        background: #2d3748; /* Dark background for the dropdown itself */
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        overflow: hidden; /* Helps with rounded corners for the overall box */
+      }
 
-    datalist option {
-      background: #2d3748; /* Dark background for individual options */
-      color: white;
-      padding: 10px 15px; /* Adjust padding as needed */
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Subtle separator */
-      cursor: pointer;
-      white-space: nowrap; /* Prevent text wrapping */
-      overflow: hidden;
-      text-overflow: ellipsis; /* Add ellipsis if text is too long */
-    }
+      datalist option {
+        background: #2d3748; /* Dark background for individual options */
+        color: white;
+        padding: 10px 15px; /* Adjust padding as needed */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Subtle separator */
+        cursor: pointer;
+        white-space: nowrap; /* Prevent text wrapping */
+        overflow: hidden;
+        text-overflow: ellipsis; /* Add ellipsis if text is too long */
+      }
 
-    datalist option:last-child {
-      border-bottom: none; /* No border on the last option */
-    }
+      datalist option:last-child {
+        border-bottom: none; /* No border on the last option */
+      }
 
-    /* Highlight on hover/focus (browser dependent) */
-    datalist option:hover, datalist option:focus {
-      background: #4a5568; /* Slightly lighter dark for hover */
-    }
-    
-    /* Input styling for datalist */
-    input[list] {
+      /* Highlight on hover/focus (browser dependent) */
+      datalist option:hover,
+      datalist option:focus {
+        background: #4a5568; /* Slightly lighter dark for hover */
+      }
+
+      /* Input styling for datalist */
+      input[list] {
         /* Remove default browser styling for select-like input */
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
-    }
+      }
 
-  </style>
-</head>
-<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen">
-  <!-- Animated Background Elements -->
-  <div class="fixed inset-0 overflow-hidden pointer-events-none">
-    <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"></div>
-    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style="animation-delay:2s"></div>
-    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style="animation-delay:4s"></div>
-  </div>
-  <div class="flex h-screen relative z-10">
-    <div class="main-content flex-1 overflow-y-auto">
-      <header class="header glassmorphism border-b border-white/10 p-6 flex items-center justify-between">
-        <div>
-          <h2 class="text-2xl font-bold text-white">Referee Match Control</h2>
-          <p class="text-gray-400">Start and manage your assigned matches</p>
+      /* Image Popup Styles */
+      .image-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        backdrop-filter: blur(10px);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .image-popup-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .image-popup-content {
+        position: relative;
+        max-width: 90vw;
+        max-height: 90vh;
+        transform: scale(0.8);
+        transition: transform 0.3s ease;
+      }
+
+      .image-popup-overlay.active .image-popup-content {
+        transform: scale(1);
+      }
+
+      .image-popup-content img {
+        height: 40vh;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      .image-popup-close {
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      .image-popup-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+      }
+
+      .team-jersey-image {
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .team-jersey-image:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen"
+  >
+    <!-- Animated Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+      <div
+        class="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"
+      ></div>
+      <div
+        class="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"
+        style="animation-delay: 2s"
+      ></div>
+      <div
+        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"
+        style="animation-delay: 4s"
+      ></div>
+    </div>
+    <div class="flex h-screen relative z-10">
+      <div class="main-content flex-1 overflow-y-auto">
+        <header
+          class="header glassmorphism border-b border-white/10 p-6 flex items-center justify-between"
+        >
+          <div>
+            <h2 class="text-2xl font-bold text-white">Referee Match Control</h2>
+            <p class="text-gray-400">Start and manage your assigned matches</p>
+          </div>
+        </header>
+        <div class="p-6">
+          <!-- Referee Stat Cards Section -->
+          <div
+            id="referee-stat-cards"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"
+          >
+            <div
+              class="glassmorphism rounded-2xl p-6 border border-white/10 flex items-center justify-between"
+            >
+              <div>
+                <div class="text-gray-300 text-sm font-medium mb-1">
+                  Total Matches
+                </div>
+                <div id="stat-total" class="text-3xl font-bold text-white">
+                  0
+                </div>
+              </div>
+              <div class="bg-indigo-600/20 rounded-xl p-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-8 w-8 text-indigo-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 7v4a1 1 0 001 1h3m10-5h3a1 1 0 011 1v4a1 1 0 01-1 1h-3m-10 4h10m-10 4h10"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div
+              class="glassmorphism rounded-2xl p-6 border border-white/10 flex items-center justify-between"
+            >
+              <div>
+                <div class="text-gray-300 text-sm font-medium mb-1">
+                  Today's Matches
+                </div>
+                <div id="stat-today" class="text-3xl font-bold text-white">
+                  0
+                </div>
+              </div>
+              <div class="bg-green-600/20 rounded-xl p-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-8 w-8 text-green-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div
+              class="glassmorphism rounded-2xl p-6 border border-white/10 flex items-center justify-between"
+            >
+              <div>
+                <div class="text-gray-300 text-sm font-medium mb-1">
+                  Upcoming
+                </div>
+                <div id="stat-upcoming" class="text-3xl font-bold text-white">
+                  0
+                </div>
+              </div>
+              <div class="bg-orange-500/20 rounded-xl p-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-8 w-8 text-orange-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div
+              class="glassmorphism rounded-2xl p-6 border border-white/10 flex items-center justify-between"
+            >
+              <div>
+                <div class="text-gray-300 text-sm font-medium mb-1">
+                  Completed
+                </div>
+                <div id="stat-completed" class="text-3xl font-bold text-white">
+                  0
+                </div>
+              </div>
+              <div class="bg-blue-600/20 rounded-xl p-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-8 w-8 text-blue-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <!-- Referee Matches Cards Section -->
+          <div
+            id="referee-matches-list"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
+          ></div>
+          <!-- Admin Start Match Logic Copied Below -->
+          <div id="admin-start-match-root" class="hidden"></div>
+          <!-- Messages -->
+          <div id="referee-messages" class="mt-6"></div>
         </div>
-      </header>
-      <div class="p-6">
-        <!-- Referee Stat Cards Section -->
-        <div id="referee-stat-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          <div class="glassmorphism rounded-2xl p-6 border border-white/10 flex items-center justify-between">
-            <div>
-              <div class="text-gray-300 text-sm font-medium mb-1">Total Matches</div>
-              <div id="stat-total" class="text-3xl font-bold text-white">0</div>
-            </div>
-            <div class="bg-indigo-600/20 rounded-xl p-3">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v4a1 1 0 001 1h3m10-5h3a1 1 0 011 1v4a1 1 0 01-1 1h-3m-10 4h10m-10 4h10" /></svg>
-            </div>
-          </div>
-          <div class="glassmorphism rounded-2xl p-6 border border-white/10 flex items-center justify-between">
-            <div>
-              <div class="text-gray-300 text-sm font-medium mb-1">Today's Matches</div>
-              <div id="stat-today" class="text-3xl font-bold text-white">0</div>
-            </div>
-            <div class="bg-green-600/20 rounded-xl p-3">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </div>
-          </div>
-          <div class="glassmorphism rounded-2xl p-6 border border-white/10 flex items-center justify-between">
-            <div>
-              <div class="text-gray-300 text-sm font-medium mb-1">Upcoming</div>
-              <div id="stat-upcoming" class="text-3xl font-bold text-white">0</div>
-            </div>
-            <div class="bg-orange-500/20 rounded-xl p-3">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </div>
-          </div>
-          <div class="glassmorphism rounded-2xl p-6 border border-white/10 flex items-center justify-between">
-            <div>
-              <div class="text-gray-300 text-sm font-medium mb-1">Completed</div>
-              <div id="stat-completed" class="text-3xl font-bold text-white">0</div>
-            </div>
-            <div class="bg-blue-600/20 rounded-xl p-3">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-            </div>
-          </div>
-        </div>
-        <!-- Referee Matches Cards Section -->
-        <div id="referee-matches-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"></div>
-        <!-- Admin Start Match Logic Copied Below -->
-        <div id="admin-start-match-root" class="hidden"></div>
-         <!-- Messages -->
-        <div id="referee-messages" class="mt-6"></div>
       </div>
     </div>
-  </div>
-  <script>
-  jQuery(document).ready(function($) {
-    let allMatches = []; // Store all match data including teams and players
 
-    function loadRefereeMatches() {
-      $.ajax({
-        url: your_plugin_ajax_object.ajax_url,
-        type: 'POST',
-        data: { action: 'your_plugin_fetch_referee_matches', nonce: your_plugin_ajax_object.nonce },
-        success: function(response) {
-          if (response.success && response.data.length > 0) {
-            allMatches = response.data;
-            renderRefereeMatchesList();
-          } else {
-            $('#referee-matches-list').html('<div class="text-white col-span-full text-center py-10">No matches assigned to you.</div>');
-            updateStatCards([]);
+    <!-- Image Popup Modal -->
+    <div id="imagePopup" class="image-popup-overlay">
+      <div class="image-popup-content">
+        <button class="image-popup-close" onclick="closeImagePopup()">
+          &times;
+        </button>
+        <img id="popupImage" src="" alt="Team Jersey" />
+      </div>
+    </div>
+
+    <script>
+      // Image Popup Functions
+      function openImagePopup(imageUrl, altText) {
+        const popup = document.getElementById("imagePopup");
+        const popupImage = document.getElementById("popupImage");
+
+        popupImage.src = imageUrl;
+        popupImage.alt = altText;
+        popup.classList.add("active");
+
+        // Prevent body scroll when popup is open
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeImagePopup() {
+        const popup = document.getElementById("imagePopup");
+        popup.classList.remove("active");
+
+        // Restore body scroll
+        document.body.style.overflow = "auto";
+      }
+
+      // Close popup when clicking on overlay
+      document.addEventListener("DOMContentLoaded", function () {
+        const popup = document.getElementById("imagePopup");
+        popup.addEventListener("click", function (e) {
+          if (e.target === popup) {
+            closeImagePopup();
           }
-        },
-        error: function() { showMessage('Error loading matches.', 'error'); }
-      });
-    }
-
-    function updateStatCards(matches) {
-        const today = new Date().toISOString().slice(0, 10);
-        let todayCount = 0;
-        let upcomingCount = 0;
-        let completedCount = 0;
-
-        matches.forEach(match => {
-            if (match.is_completed === '1' || match.is_completed === 1) {
-                completedCount++;
-            } else if (match.date === today) {
-                todayCount++;
-            } else if (new Date(match.date) > new Date(today)) {
-                upcomingCount++;
-            }
         });
 
-        $('#stat-total').text(matches.length);
-        $('#stat-today').text(todayCount);
-        $('#stat-upcoming').text(upcomingCount);
-        $('#stat-completed').text(completedCount);
-    }
+        // Close popup with Escape key
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") {
+            closeImagePopup();
+          }
+        });
+      });
 
-    function renderRefereeMatchesList() {
-      updateStatCards(allMatches);
-      const today = new Date().toISOString().slice(0, 10);
+      jQuery(document).ready(function ($) {
+        let allMatches = []; // Store all match data including teams and players
 
-      // Separate matches by status
-      let todayMatches = [], upcomingMatches = [], pastIncompleteMatches = [], completedMatches = [];
-
-      allMatches.forEach(function(match) {
-        if (match.is_completed === '1' || match.is_completed === 1) {
-          completedMatches.push(match);
-        } else {
-            const matchDate = new Date(match.date);
-            const todayDate = new Date(today);
-            if (match.date === today) {
-                todayMatches.push(match);
-            } else if (matchDate > todayDate) {
-                upcomingMatches.push(match);
-            } else {
-                pastIncompleteMatches.push(match);
-            }
+        function loadRefereeMatches() {
+          $.ajax({
+            url: your_plugin_ajax_object.ajax_url,
+            type: "POST",
+            data: {
+              action: "your_plugin_fetch_referee_matches",
+              nonce: your_plugin_ajax_object.nonce,
+            },
+            success: function (response) {
+              if (response.success && response.data.length > 0) {
+                allMatches = response.data;
+                renderRefereeMatchesList();
+              } else {
+                $("#referee-matches-list").html(
+                  '<div class="text-white col-span-full text-center py-10">No matches assigned to you.</div>'
+                );
+                updateStatCards([]);
+              }
+            },
+            error: function () {
+              showMessage("Error loading matches.", "error");
+            },
+          });
         }
-      });
 
-      // Define comparison function for sorting by date ascending
-      function byDateAsc(a, b) { return a.date.localeCompare(b.date); }
-      
-      // Sort each group
-      todayMatches.sort(byDateAsc);
-      upcomingMatches.sort(byDateAsc);
-      pastIncompleteMatches.sort(byDateAsc);
-      
-      // Sort completed matches by date descending (newest first)
-      completedMatches.sort(function(a, b) {
-        return b.date.localeCompare(a.date);
-      });
+        function updateStatCards(matches) {
+          const today = new Date().toISOString().slice(0, 10);
+          let todayCount = 0;
+          let upcomingCount = 0;
+          let completedCount = 0;
 
-      let html = '';
-      function matchCard(match, status, btn, extraClass = '') {
-        return `<div class="card-hover glassmorphism rounded-2xl p-6 border border-white/10 flex flex-col justify-between ${extraClass}">
+          matches.forEach((match) => {
+            if (match.is_completed === "1" || match.is_completed === 1) {
+              completedCount++;
+            } else if (match.date === today) {
+              todayCount++;
+            } else if (new Date(match.date) > new Date(today)) {
+              upcomingCount++;
+            }
+          });
+
+          $("#stat-total").text(matches.length);
+          $("#stat-today").text(todayCount);
+          $("#stat-upcoming").text(upcomingCount);
+          $("#stat-completed").text(completedCount);
+        }
+
+        function renderRefereeMatchesList() {
+          updateStatCards(allMatches);
+          const today = new Date().toISOString().slice(0, 10);
+
+          // Separate matches by status
+          let todayMatches = [],
+            upcomingMatches = [],
+            pastIncompleteMatches = [],
+            completedMatches = [];
+
+          allMatches.forEach(function (match) {
+            if (match.is_completed === "1" || match.is_completed === 1) {
+              completedMatches.push(match);
+            } else {
+              const matchDate = new Date(match.date);
+              const todayDate = new Date(today);
+              if (match.date === today) {
+                todayMatches.push(match);
+              } else if (matchDate > todayDate) {
+                upcomingMatches.push(match);
+              } else {
+                pastIncompleteMatches.push(match);
+              }
+            }
+          });
+
+          // Define comparison function for sorting by date ascending
+          function byDateAsc(a, b) {
+            return a.date.localeCompare(b.date);
+          }
+
+          // Sort each group
+          todayMatches.sort(byDateAsc);
+          upcomingMatches.sort(byDateAsc);
+          pastIncompleteMatches.sort(byDateAsc);
+
+          // Sort completed matches by date descending (newest first)
+          completedMatches.sort(function (a, b) {
+            return b.date.localeCompare(a.date);
+          });
+
+          let html = "";
+          function matchCard(match, status, btn, extraClass = "") {
+            return `<div class="card-hover glassmorphism rounded-2xl p-6 border border-white/10 flex flex-col justify-between ${extraClass}">
           <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-lg font-bold text-white">${match.team1Name} vs ${match.team2Name}</span>
+            <div class="flex items-center justify-between mb-4">
+               <div class="flex items-center">
+                  <img src="${
+                    match.team1Jersey || "https://via.placeholder.com/40"
+                  }" alt="${match.team1Name} Jersey" class="w-20 h-20 rounded-full object-cover mr-3 border-2 border-white/20">
+                  <img src="${
+                    match.team2Jersey || "https://via.placeholder.com/40"
+                  }" alt="${match.team2Name} Jersey" class="w-20 h-20 rounded-full object-cover -ml-5 border-2 border-white/20">
+                  <span class="text-lg font-bold text-white ml-3">${
+                    match.team1Name
+                  } vs ${match.team2Name}</span>
+              </div>
               ${status}
             </div>
-            <div class="text-gray-300 text-sm mb-1"><span class="font-medium">Date:</span> ${match.date}</div>
-            <div class="text-gray-300 text-sm mb-1"><span class="font-medium">Location:</span> ${match.location || 'N/A'}</div>
-            <div class="text-gray-300 text-sm mb-1"><span class="font-medium">Week:</span> ${match.week || 'N/A'}</div>
+            <div class="text-gray-300 text-sm mb-1"><span class="font-medium">Date:</span> ${
+              match.date
+            }</div>
+            <div class="text-gray-300 text-sm mb-1"><span class="font-medium">Location:</span> ${
+              match.location || "N/A"
+            }</div>
+            <div class="text-gray-300 text-sm mb-1"><span class="font-medium">Week:</span> ${
+              match.week || "N/A"
+            }</div>
           </div>
           ${btn}
         </div>`;
-      }
-      
-      // Today's matches
-      todayMatches.forEach(function(match) {
-        html += matchCard(
-          match,
-          '<span class="inline-block px-3 py-1 rounded-full bg-green-600 text-white text-xs font-semibold">Today</span>',
-          `<button class="start-match-card-btn mt-4 w-full bg-gradient-to-r from-green-500 to-green-700 text-white py-2 px-4 rounded-lg font-semibold hover:from-green-600 hover:to-green-800 transition-all" data-match-id="${match.id}">Start Match</button>`
-        );
-      });
-      
-      // Upcoming matches
-      upcomingMatches.forEach(function(match) {
-        html += matchCard(
-          match,
-          '<span class="inline-block px-3 py-1 rounded-full bg-orange-500 text-white text-xs font-semibold">Upcoming</span>',
-          `<button class="mt-4 w-full bg-gradient-to-r from-gray-500 to-gray-700 text-white py-2 px-4 rounded-lg font-semibold cursor-not-allowed opacity-60" disabled>Upcoming</button>`
-        );
-      });
+          }
 
-      // Past, incomplete matches
-      pastIncompleteMatches.forEach(function(match) {
-        html += matchCard(
-          match,
-          '<span class="inline-block px-3 py-1 rounded-full bg-red-600 text-white text-xs font-semibold">Past Due</span>',
-          `<button class="start-match-card-btn mt-4 w-full bg-gradient-to-r from-yellow-500 to-yellow-700 text-white py-2 px-4 rounded-lg font-semibold hover:from-yellow-600 hover:to-yellow-800 transition-all" data-match-id="${match.id}">Enter Score</button>`
-        );
-      });
-      
-      // Completed matches
-      completedMatches.forEach(function(match) {
-        html += matchCard(
-          match,
-          '<span class="inline-block px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-semibold">Completed</span>',
-          `<button class="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white py-2 px-4 rounded-lg font-semibold cursor-not-allowed opacity-60" disabled>Completed</button>`,
-          'opacity-70'
-        );
-      });
-      $('#referee-matches-list').html(html);
-    }
-    
-    // Card Start Match button click
-    $(document).on('click', '.start-match-card-btn', function() {
-      const matchId = $(this).data('match-id');
-      if (!matchId) return;
-      // Hide match list and stat cards, show admin start match section
-      $('#referee-matches-list, #referee-stat-cards').addClass('hidden');
-      $('#admin-start-match-root').removeClass('hidden');
-      renderAdminStartMatch(matchId);
-    });
+          // Today's matches
+          todayMatches.forEach(function (match) {
+            html += matchCard(
+              match,
+              '<span class="inline-block px-3 py-1 rounded-full bg-green-600 text-white text-xs font-semibold">Today</span>',
+              `<button class="start-match-card-btn mt-4 w-full bg-gradient-to-r from-green-500 to-green-700 text-white py-2 px-4 rounded-lg font-semibold hover:from-green-600 hover:to-green-800 transition-all" data-match-id="${match.id}">Start Match</button>`
+            );
+          });
 
-    function renderAdminStartMatch(matchId) {
-        const match = allMatches.find((m) => m.id == matchId);
-        if (!match) {
-            $('#admin-start-match-root').html('<div class="text-red-400">Match not found!</div>');
-            return;
+          // Upcoming matches
+          upcomingMatches.forEach(function (match) {
+            html += matchCard(
+              match,
+              '<span class="inline-block px-3 py-1 rounded-full bg-orange-500 text-white text-xs font-semibold">Upcoming</span>',
+              `<button class="mt-4 w-full bg-gradient-to-r from-gray-500 to-gray-700 text-white py-2 px-4 rounded-lg font-semibold cursor-not-allowed opacity-60" disabled>Upcoming</button>`
+            );
+          });
+
+          // Past, incomplete matches
+          pastIncompleteMatches.forEach(function (match) {
+            html += matchCard(
+              match,
+              '<span class="inline-block px-3 py-1 rounded-full bg-red-600 text-white text-xs font-semibold">Past Due</span>',
+              `<button class="start-match-card-btn mt-4 w-full bg-gradient-to-r from-yellow-500 to-yellow-700 text-white py-2 px-4 rounded-lg font-semibold hover:from-yellow-600 hover:to-yellow-800 transition-all" data-match-id="${match.id}">Enter Score</button>`
+            );
+          });
+
+          // Completed matches
+          completedMatches.forEach(function (match) {
+            html += matchCard(
+              match,
+              '<span class="inline-block px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-semibold">Completed</span>',
+              `<button class="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white py-2 px-4 rounded-lg font-semibold cursor-not-allowed opacity-60" disabled>Completed</button>`,
+              "opacity-70"
+            );
+          });
+          $("#referee-matches-list").html(html);
         }
 
-        console.log('Match data:', match);
-        console.log('Team1 ID:', match.team1Id);
-        console.log('Team2 ID:', match.team2Id);
+        // Card Start Match button click
+        $(document).on("click", ".start-match-card-btn", function () {
+          const matchId = $(this).data("match-id");
+          if (!matchId) return;
+          // Hide match list and stat cards, show admin start match section
+          $("#referee-matches-list, #referee-stat-cards").addClass("hidden");
+          $("#admin-start-match-root").removeClass("hidden");
+          renderAdminStartMatch(matchId);
+        });
 
-        // Show loading state while fetching team data
-        $('#admin-start-match-root').html('<div class="text-white text-center py-10">Loading team data...</div>');
+        function renderAdminStartMatch(matchId) {
+          const match = allMatches.find((m) => m.id == matchId);
+          if (!match) {
+            $("#admin-start-match-root").html(
+              '<div class="text-red-400">Match not found!</div>'
+            );
+            return;
+          }
 
-        // Fetch team members if not already available
-        fetchTeamMembers(match.team1Id, match.team2Id, function(team1Data, team2Data) {
-            console.log('Team 1 data received:', team1Data);
-            console.log('Team 2 data received:', team2Data);
-            
-            // Get team objects with members
-            const team1 = {
+          console.log("Match data:", match);
+          console.log("Team1 ID:", match.team1Id);
+          console.log("Team2 ID:", match.team2Id);
+
+          // Show loading state while fetching team data
+          $("#admin-start-match-root").html(
+            '<div class="text-white text-center py-10">Loading team data...</div>'
+          );
+
+          // Fetch team members if not already available
+          fetchTeamMembers(
+            match.team1Id,
+            match.team2Id,
+            function (team1Data, team2Data) {
+              console.log("Team 1 data received:", team1Data);
+              console.log("Team 2 data received:", team2Data);
+
+              // Get team objects with members
+              const team1 = {
                 name: team1Data.name || match.team1Name || "Unknown Team",
-                members: team1Data.members || []
-            };
-            const team2 = {
-                name: team2Data.name || match.team2Name || "Unknown Team", 
-                members: team2Data.members || []
-            };
-            
-            console.log('Final team1 object:', team1);
-            console.log('Final team2 object:', team2);
-            
-            renderMatchInterface(match, team1, team2);
-        });
-    }
+                members: team1Data.members || [],
+                jersey_image_url: team1Data.jersey_image_url || null, // Add jersey_image_url
+              };
+              const team2 = {
+                name: team2Data.name || match.team2Name || "Unknown Team",
+                members: team2Data.members || [],
+                jersey_image_url: team2Data.jersey_image_url || null, // Add jersey_image_url
+              };
 
-    function fetchTeamMembers(team1Id, team2Id, callback) {
-        $.ajax({
-            url: your_plugin_ajax_object.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'fetch_team_members',
-                nonce: your_plugin_ajax_object.nonce,
-                team1_id: team1Id,
-                team2_id: team2Id
-            },
-            success: function(response) {
-                console.log('Team members AJAX response:', response);
-                console.log('Response data:', response.data);
-                if (response.data && response.data.team1) {
-                    console.log('Team1 response data:', response.data.team1);
-                    console.log('Team1 members:', response.data.team1.members);
-                }
-                if (response.data && response.data.team2) {
-                    console.log('Team2 response data:', response.data.team2);
-                    console.log('Team2 members:', response.data.team2.members);
-                }
-                if (response.success) {
-                    callback(response.data.team1, response.data.team2);
-                } else {
-                    console.error('Failed to fetch team members:', response.data);
-                    // Fallback with empty members
-                    callback({name: 'Team 1', members: []}, {name: 'Team 2', members: []});
-                }
-            },
-            error: function() {
-                console.error('AJAX error when fetching team members');
-                // Fallback with empty members
-                callback({name: 'Team 1', members: []}, {name: 'Team 2', members: []});
+              console.log("Final team1 object:", team1);
+              console.log("Final team2 object:", team2);
+
+              renderMatchInterface(match, team1, team2);
             }
-        });
-    }
+          );
+        }
 
-    function renderMatchInterface(match, team1, team2) {
-        const matchId = match.id; // Store matchId for use in form handlers
-        const team1Name = team1.name;
-        const team2Name = team2.name;
-        
-        function buildDatalistOptions(members) {
+        function fetchTeamMembers(team1Id, team2Id, callback) {
+          $.ajax({
+            url: your_plugin_ajax_object.ajax_url,
+            type: "POST",
+            data: {
+              action: "fetch_team_members",
+              nonce: your_plugin_ajax_object.nonce,
+              team1_id: team1Id,
+              team2_id: team2Id,
+            },
+            success: function (response) {
+              console.log("Team members AJAX response:", response);
+              console.log("Response data:", response.data);
+              if (response.data && response.data.team1) {
+                console.log("Team1 response data:", response.data.team1);
+                console.log("Team1 members:", response.data.team1.members);
+              }
+              if (response.data && response.data.team2) {
+                console.log("Team2 response data:", response.data.team2);
+                console.log("Team2 members:", response.data.team2.members);
+              }
+              if (response.success) {
+                callback(response.data.team1, response.data.team2);
+              } else {
+                console.error("Failed to fetch team members:", response.data);
+                // Fallback with empty members
+                callback(
+                  { name: "Team 1", members: [] },
+                  { name: "Team 2", members: [] }
+                );
+              }
+            },
+            error: function () {
+              console.error("AJAX error when fetching team members");
+              // Fallback with empty members
+              callback(
+                { name: "Team 1", members: [] },
+                { name: "Team 2", members: [] }
+              );
+            },
+          });
+        }
+
+        function renderMatchInterface(match, team1, team2) {
+          const matchId = match.id; // Store matchId for use in form handlers
+          const team1Name = team1.name;
+          const team2Name = team2.name;
+
+          function buildDatalistOptions(members) {
             // Ensure members is an array and has valid data
             if (!members || !Array.isArray(members)) {
-                console.log('Members is not a valid array:', members);
-                return '';
+              console.log("Members is not a valid array:", members);
+              return "";
             }
-            console.log('Building datalist options for members:', members);
+            console.log("Building datalist options for members:", members);
             const options = members
-              .filter(member => member && member.id && member.name) // Filter out invalid members
+              .filter((member) => member && member.id && member.name) // Filter out invalid members
               .map(
                 (member) =>
                   `<option value="${member.id}">${member.name}</option>`
               )
               .join("");
-            console.log('Generated datalist options:', options);
+            console.log("Generated datalist options:", options);
             return options;
-        }
+          }
 
-        const teamIconSVG = `
-            <svg class="w-6 h-6 mr-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-            </svg>
+          const teamIconSVG = (jerseyUrl, teamName) => `
+            <img src="${
+              jerseyUrl || "https://via.placeholder.com/80"
+            }" alt="${teamName} Jersey" class="w-20 h-20 rounded-lg object-cover mr-4 border-2 border-white/20 team-jersey-image" onclick="openImagePopup('${
+            jerseyUrl || "https://via.placeholder.com/80"
+          }', '${teamName} Jersey')">
           `;
 
-        const cardFormHTML = (teamNum, datalistOptions) => `
+          const cardFormHTML = (teamNum, datalistOptions) => `
             <form class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-4">
               <input type="text" list="playerIdsTeam${teamNum}" class="w-full sm:w-32 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Player ID" />
               <datalist id="playerIdsTeam${teamNum}">${datalistOptions}</datalist>
@@ -484,7 +760,11 @@
             </form>
         `;
 
-        function renderPlayerEventsTable($container, playerEvents, teamGoals) {
+          function renderPlayerEventsTable(
+            $container,
+            playerEvents,
+            teamGoals
+          ) {
             const goalColumnCount = Math.max(8, teamGoals.length);
             let table = `
                 <div class="player-events-table">
@@ -492,45 +772,74 @@
                     <thead>
                       <tr>
                         <th class="px-2 py-1 border-b border-white/10">Player ID</th>
-                        ${[...Array(goalColumnCount)].map((_, i) => `<th class="px-2 py-1 border-b border-white/10">${i + 1}</th>`).join("")}
+                        ${[...Array(goalColumnCount)]
+                          .map(
+                            (_, i) =>
+                              `<th class="px-2 py-1 border-b border-white/10">${
+                                i + 1
+                              }</th>`
+                          )
+                          .join("")}
                         <th class="px-2 py-1 border-b border-white/10 text-blue-400">Blue</th>
                         <th class="px-2 py-1 border-b border-white/10 text-yellow-400">Yellow</th>
                         <th class="px-2 py-1 border-b border-white/10 text-red-400">Red</th>
                       </tr>
                     </thead>
                     <tbody>
-                      ${playerEvents.map(ev => `
+                      ${playerEvents
+                        .map(
+                          (ev) => `
                         <tr>
-                          <td class="px-2 py-1 border-b border-white/10 text-center">${ev.id}</td>
+                          <td class="px-2 py-1 border-b border-white/10 text-center">${
+                            ev.id
+                          }</td>
                           ${Array.from({ length: goalColumnCount }, (_, i) => {
-                              const scorerId = teamGoals[i];
-                              return `<td class="px-2 py-1 border-b border-white/10 text-center">
+                            const scorerId = teamGoals[i];
+                            return `<td class="px-2 py-1 border-b border-white/10 text-center">
                                   <label class="custom-checkbox">
-                                    <input type="checkbox" data-player-id="${ev.id}" data-goal-index="${i}" class="goal-checkbox" ${scorerId && scorerId == ev.id ? "checked" : ""}>
+                                    <input type="checkbox" data-player-id="${
+                                      ev.id
+                                    }" data-goal-index="${i}" class="goal-checkbox" ${
+                              scorerId && scorerId == ev.id ? "checked" : ""
+                            }>
                                     <span></span>
                                   </label>
                                 </td>`;
                           }).join("")}
                           <td class="px-2 py-1 border-b border-white/10 text-center">
                             <label class="custom-checkbox blue-checkbox">
-                              <input type="checkbox" data-player-id="${ev.id}" data-card-type="blue" class="card-checkbox" ${ev.blue ? "checked" : ""}>
+                              <input type="checkbox" data-player-id="${
+                                ev.id
+                              }" data-card-type="blue" class="card-checkbox" ${
+                            ev.blue ? "checked" : ""
+                          }>
                               <span></span>
                             </label>
                           </td>
                           <td class="px-2 py-1 border-b border-white/10 text-center">
                             <label class="custom-checkbox yellow-checkbox">
-                              <input type="checkbox" data-player-id="${ev.id}" data-card-type="yellow" class="card-checkbox" ${ev.yellow ? "checked" : ""}>
+                              <input type="checkbox" data-player-id="${
+                                ev.id
+                              }" data-card-type="yellow" class="card-checkbox" ${
+                            ev.yellow ? "checked" : ""
+                          }>
                               <span></span>
                             </label>
                           </td>
                           <td class="px-2 py-1 border-b border-white/10 text-center">
                             <label class="custom-checkbox red-checkbox">
-                              <input type="checkbox" data-player-id="${ev.id}" data-card-type="red" class="card-checkbox" ${ev.red ? "checked" : ""}>
+                              <input type="checkbox" data-player-id="${
+                                ev.id
+                              }" data-card-type="red" class="card-checkbox" ${
+                            ev.red ? "checked" : ""
+                          }>
                               <span></span>
                             </label>
                           </td>
                         </tr>
-                      `).join("")}
+                      `
+                        )
+                        .join("")}
                     </tbody>
                   </table>
                 </div>
@@ -538,60 +847,82 @@
             $container.html(table);
 
             // Add event listeners for goal checkboxes
-            $container.find('.goal-checkbox').on('change', function() {
-                const playerId = $(this).data('player-id');
-                const goalIndex = $(this).data('goal-index');
-                const isChecked = $(this).prop('checked');
-                
-                let teamGoals = $container.closest('.team-scoring-card').data('teamGoals');
-                
-                if (isChecked) {
-                    // Add goal at specific index
-                    teamGoals[goalIndex] = playerId;
-                } else {
-                    // Remove goal at specific index
-                    teamGoals[goalIndex] = undefined;
-                }
-                
-                // Update team goals data
-                $container.closest('.team-scoring-card').data('teamGoals', teamGoals);
-                
-                // Re-render table to reflect changes
-                const playerEvents = $container.closest('.team-scoring-card').data('playerEvents');
-                renderPlayerEventsTable($container, playerEvents, teamGoals);
+            $container.find(".goal-checkbox").on("change", function () {
+              const playerId = $(this).data("player-id");
+              const goalIndex = $(this).data("goal-index");
+              const isChecked = $(this).prop("checked");
+
+              let teamGoals = $container
+                .closest(".team-scoring-card")
+                .data("teamGoals");
+
+              if (isChecked) {
+                // Add goal at specific index
+                teamGoals[goalIndex] = playerId;
+              } else {
+                // Remove goal at specific index
+                teamGoals[goalIndex] = undefined;
+              }
+
+              // Update team goals data
+              $container
+                .closest(".team-scoring-card")
+                .data("teamGoals", teamGoals);
+
+              // Re-render table to reflect changes
+              const playerEvents = $container
+                .closest(".team-scoring-card")
+                .data("playerEvents");
+              renderPlayerEventsTable($container, playerEvents, teamGoals);
             });
 
             // Add event listeners for card checkboxes
-            $container.find('.card-checkbox').on('change', function() {
-                const playerId = $(this).data('player-id');
-                const cardType = $(this).data('card-type');
-                const isChecked = $(this).prop('checked');
-                
-                let playerEvents = $container.closest('.team-scoring-card').data('playerEvents');
-                let player = playerEvents.find(ev => ev.id == playerId);
-                
-                if (player) {
-                    player[cardType] = isChecked;
-                    
-                    // Update player events data
-                    $container.closest('.team-scoring-card').data('playerEvents', playerEvents);
-                }
+            $container.find(".card-checkbox").on("change", function () {
+              const playerId = $(this).data("player-id");
+              const cardType = $(this).data("card-type");
+              const isChecked = $(this).prop("checked");
+
+              let playerEvents = $container
+                .closest(".team-scoring-card")
+                .data("playerEvents");
+              let player = playerEvents.find((ev) => ev.id == playerId);
+
+              if (player) {
+                player[cardType] = isChecked;
+
+                // Update player events data
+                $container
+                  .closest(".team-scoring-card")
+                  .data("playerEvents", playerEvents);
+              }
             });
-        }
-        
-        const mainHtml = `
+          }
+
+          const mainHtml = `
             <div class="space-y-8">
                 <!-- Team 1 Card -->
                 <div class="card-hover glassmorphism team-scoring-card rounded-2xl p-6 border border-white/10 flex flex-col">
-                    <h3 class="text-xl font-bold text-white flex items-center">${teamIconSVG}<span class="ml-1">${team1Name}</span></h3>
-                    ${cardFormHTML(1, buildDatalistOptions(team1.members || []))}
+                    <h3 class="text-xl font-bold text-white flex items-center">${teamIconSVG(
+                      team1.jersey_image_url,
+                      team1Name
+                    )}<span class="ml-1">${team1Name}</span></h3>
+                    ${cardFormHTML(
+                      1,
+                      buildDatalistOptions(team1.members || [])
+                    )}
                     <div class="events-table-container flex-grow"></div>
                 </div>
 
                 <!-- Team 2 Card -->
                 <div class="card-hover glassmorphism team-scoring-card rounded-2xl p-6 border border-white/10 flex flex-col">
-                    <h3 class="text-xl font-bold text-white flex items-center">${teamIconSVG}<span class="ml-1">${team2Name}</span></h3>
-                    ${cardFormHTML(2, buildDatalistOptions(team2.members || []))}
+                    <h3 class="text-xl font-bold text-white flex items-center">${teamIconSVG(
+                      team2.jersey_image_url,
+                      team2Name
+                    )}<span class="ml-1">${team2Name}</span></h3>
+                    ${cardFormHTML(
+                      2,
+                      buildDatalistOptions(team2.members || [])
+                    )}
                     <div class="events-table-container flex-grow"></div>
                 </div>
 
@@ -611,62 +942,77 @@
                     </form>
                 </div>
             </div>`;
-        
-        $('#admin-start-match-root').html(mainHtml);
 
-        $('.team-scoring-card').each(function() {
+          $("#admin-start-match-root").html(mainHtml);
+
+          $(".team-scoring-card").each(function () {
             const $card = $(this);
-            $card.data('playerEvents', []);
-            $card.data('teamGoals', []);
-            const $tableContainer = $card.find('.events-table-container');
+            $card.data("playerEvents", []);
+            $card.data("teamGoals", []);
+            const $tableContainer = $card.find(".events-table-container");
 
-            renderPlayerEventsTable($tableContainer, $card.data('playerEvents'), $card.data('teamGoals'));
+            renderPlayerEventsTable(
+              $tableContainer,
+              $card.data("playerEvents"),
+              $card.data("teamGoals")
+            );
 
-            $card.find('button').on('click', function(e) {
-                e.preventDefault();
-                const $input = $card.find('input[type="text"]');
-                const playerId = $input.val().trim();
+            $card.find("button").on("click", function (e) {
+              e.preventDefault();
+              const $input = $card.find('input[type="text"]');
+              const playerId = $input.val().trim();
 
-                if (!playerId) {
-                    showMessage('Please enter a player ID.', 'error');
-                    return;
-                }
-                
-                // Validate that the player ID exists in the team's member list
-                const teamIndex = $('.team-scoring-card').index($card) + 1;
-                const teamMembers = teamIndex === 1 ? team1.members : team2.members;
-                const validPlayer = teamMembers.find(member => member.id == playerId);
-                
-                if (!validPlayer) {
-                    showMessage('Invalid player ID. Please select a player from the team roster.', 'error');
-                    return;
-                }
+              if (!playerId) {
+                showMessage("Please enter a player ID.", "error");
+                return;
+              }
 
-                let playerEvents = $card.data('playerEvents');
-                let teamGoals = $card.data('teamGoals');
-                let player = playerEvents.find(ev => ev.id == playerId); // Use == for loose comparison
-                if (!player) {
-                    player = { id: playerId, blue: false, yellow: false, red: false };
-                    playerEvents.push(player);
-                }
+              // Validate that the player ID exists in the team's member list
+              const teamIndex = $(".team-scoring-card").index($card) + 1;
+              const teamMembers =
+                teamIndex === 1 ? team1.members : team2.members;
+              const validPlayer = teamMembers.find(
+                (member) => member.id == playerId
+              );
 
-                const buttonText = $(this).text();
-                if (buttonText.includes('Goal')) {
-                    teamGoals.push(playerId);
-                } else if (buttonText.includes('Blue')) {
-                    player.blue = true;
-                } else if (buttonText.includes('Yellow')) {
-                    player.yellow = true;
-                } else if (buttonText.includes('Red')) {
-                    player.red = true;
-                }
+              if (!validPlayer) {
+                showMessage(
+                  "Invalid player ID. Please select a player from the team roster.",
+                  "error"
+                );
+                return;
+              }
 
-                renderPlayerEventsTable($tableContainer, playerEvents, teamGoals);
-                $input.val('');
+              let playerEvents = $card.data("playerEvents");
+              let teamGoals = $card.data("teamGoals");
+              let player = playerEvents.find((ev) => ev.id == playerId); // Use == for loose comparison
+              if (!player) {
+                player = {
+                  id: playerId,
+                  blue: false,
+                  yellow: false,
+                  red: false,
+                };
+                playerEvents.push(player);
+              }
+
+              const buttonText = $(this).text();
+              if (buttonText.includes("Goal")) {
+                teamGoals.push(playerId);
+              } else if (buttonText.includes("Blue")) {
+                player.blue = true;
+              } else if (buttonText.includes("Yellow")) {
+                player.yellow = true;
+              } else if (buttonText.includes("Red")) {
+                player.red = true;
+              }
+
+              renderPlayerEventsTable($tableContainer, playerEvents, teamGoals);
+              $input.val("");
             });
-        });
+          });
 
-        $('#matchSummaryForm').on('submit', function(e) {
+          $("#matchSummaryForm").on("submit", function (e) {
             e.preventDefault();
             const finalScore = this.final_score.value;
             const firstHalfFouls = this.first_half_fouls.value;
@@ -674,64 +1020,86 @@
             const cautionDesc = this.caution_desc.value;
             const additionalNotes = this.additional_notes.value;
 
-            const $cards = $('.team-scoring-card');
+            const $cards = $(".team-scoring-card");
             const team1Card = $cards.eq(0);
             const team2Card = $cards.eq(1);
 
             function getTeamScoreData($card, teamId) {
-                const goals = ($card.data('teamGoals') || []).map((pid, idx) => ({ playerId: pid, goalIndex: idx + 1 }));
-                const cardsArr = ($card.data('playerEvents') || []).map(ev => ({ playerId: ev.id, blue: !!ev.blue, yellow: !!ev.yellow, red: !!ev.red }));
-                return { id: teamId, goals, cards: cardsArr };
+              const goals = ($card.data("teamGoals") || []).map((pid, idx) => ({
+                playerId: pid,
+                goalIndex: idx + 1,
+              }));
+              const cardsArr = ($card.data("playerEvents") || []).map((ev) => ({
+                playerId: ev.id,
+                blue: !!ev.blue,
+                yellow: !!ev.yellow,
+                red: !!ev.red,
+              }));
+              return { id: teamId, goals, cards: cardsArr };
             }
 
             const scoreData = JSON.stringify({
-                team1: getTeamScoreData(team1Card, match.team1Id),
-                team2: getTeamScoreData(team2Card, match.team2Id),
+              team1: getTeamScoreData(team1Card, match.team1Id),
+              team2: getTeamScoreData(team2Card, match.team2Id),
             });
-            
-            $.ajax({
-                url: your_plugin_ajax_object.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'save_soccer_match_summary',
-                    nonce: your_plugin_ajax_object.nonce,
-                    match_id: matchId,
-                    final_score: finalScore,
-                    first_half_fouls: firstHalfFouls,
-                    second_half_fouls: secondHalfFouls,
-                    caution_desc: cautionDesc,
-                    additional_notes: additionalNotes,
-                    score_data: scoreData,
-                },
-                success: function(response) {
-                    if (response.success) {
-                        showMessage('Match summary saved!', 'success');
-                        loadRefereeMatches();
-                        $('#admin-start-match-root').addClass('hidden').html('');
-                        $('#referee-matches-list, #referee-stat-cards').removeClass('hidden');
-                    } else {
-                        showMessage(response.data.message || 'Failed to save match summary.', 'error');
-                    }
-                },
-                error: function() { showMessage('Error saving match summary.', 'error'); }
-            });
-        });
-    }
 
-    function showMessage(message, type) {
-        const alertClass = type === 'error' ? 'bg-red-500/80' : type === 'success' ? 'bg-green-500/80' : 'bg-blue-500/80';
-        const messageHtml = `<div class="fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 ${alertClass}" role="alert">
+            $.ajax({
+              url: your_plugin_ajax_object.ajax_url,
+              type: "POST",
+              data: {
+                action: "save_soccer_match_summary",
+                nonce: your_plugin_ajax_object.nonce,
+                match_id: matchId,
+                final_score: finalScore,
+                first_half_fouls: firstHalfFouls,
+                second_half_fouls: secondHalfFouls,
+                caution_desc: cautionDesc,
+                additional_notes: additionalNotes,
+                score_data: scoreData,
+              },
+              success: function (response) {
+                if (response.success) {
+                  showMessage("Match summary saved!", "success");
+                  loadRefereeMatches();
+                  $("#admin-start-match-root").addClass("hidden").html("");
+                  $("#referee-matches-list, #referee-stat-cards").removeClass(
+                    "hidden"
+                  );
+                } else {
+                  showMessage(
+                    response.data.message || "Failed to save match summary.",
+                    "error"
+                  );
+                }
+              },
+              error: function () {
+                showMessage("Error saving match summary.", "error");
+              },
+            });
+          });
+        }
+
+        function showMessage(message, type) {
+          const alertClass =
+            type === "error"
+              ? "bg-red-500/80"
+              : type === "success"
+              ? "bg-green-500/80"
+              : "bg-blue-500/80";
+          const messageHtml = `<div class="fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 ${alertClass}" role="alert">
                                 <span class="block sm:inline">${message}</span>
                             </div>`;
-        const $message = $(messageHtml).appendTo('body');
-        setTimeout(function() {
-            $message.fadeOut(500, function() { $(this).remove(); });
-        }, 3000);
-    }
-    
-    // Initial load
-    loadRefereeMatches();
-  });
-  </script>
-</body>
+          const $message = $(messageHtml).appendTo("body");
+          setTimeout(function () {
+            $message.fadeOut(500, function () {
+              $(this).remove();
+            });
+          }, 3000);
+        }
+
+        // Initial load
+        loadRefereeMatches();
+      });
+    </script>
+  </body>
 </html>
