@@ -35,13 +35,295 @@ function your_plugin_enqueue_assets()
         'nonce'    => wp_create_nonce('your_plugin_ajax_nonce'), // Security nonce for AJAX requests
     ));
 
-    // Enqueue your custom stylesheet
+    // Enqueue your custom stylesheet with proper scoping
+    your_plugin_enqueue_scoped_styles();
+}
+
+// New function to handle scoped styling
+function your_plugin_enqueue_scoped_styles()
+{
+    // Only enqueue on pages with our shortcodes
+    global $post;
+    if (
+        ! is_a($post, 'WP_Post') ||
+        (
+            ! has_shortcode($post->post_content, 'admin_dashboard_widget') &&
+            ! has_shortcode($post->post_content, 'start_match_shortcode')
+        )
+    ) {
+        return;
+    }
+
+    // Enqueue the main plugin stylesheet
     wp_enqueue_style(
         'your-plugin-style',
-        plugin_dir_url(__FILE__) . 'css/style.css', // Path to your CSS file
-        array(), // Dependencies
-        '1.0' // Version number
+        plugin_dir_url(__FILE__) . 'css/style.css',
+        array(),
+        '1.0'
     );
+
+    // Add inline styles for proper scoping and theme isolation
+    $scoped_styles = your_plugin_get_scoped_styles();
+    wp_add_inline_style('your-plugin-style', $scoped_styles);
+}
+
+// Function to generate scoped styles that won't interfere with theme
+function your_plugin_get_scoped_styles()
+{
+    return "
+    /* Soccer Plugin Scoped Styles - Isolated from theme */
+    
+    /* Reset and isolate plugin elements */
+    .soccer-plugin-container,
+    .soccer-plugin-container * {
+        box-sizing: border-box;
+    }
+    
+    /* Force plugin background and prevent theme interference */
+    body.your-plugin-dashboard-active {
+        background: linear-gradient(to bottom right, #1e293b, #4c1d95, #1e293b) !important;
+        background-size: 200% 200% !important;
+        background-attachment: fixed !important;
+        color: #e2e8f0 !important;
+        min-height: 100vh !important;
+    }
+    
+    /* Isolate plugin content from theme styles */
+    .soccer-plugin-container {
+        position: relative;
+        z-index: 1000;
+        background: transparent !important;
+        color: inherit !important;
+    }
+    
+    /* Override theme styles for plugin elements */
+    .soccer-plugin-container .glassmorphism {
+        background: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .soccer-plugin-container .card-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    
+    .soccer-plugin-container .card-hover:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    }
+    
+    /* Ensure plugin forms and inputs are properly styled */
+    .soccer-plugin-container input,
+    .soccer-plugin-container select,
+    .soccer-plugin-container textarea,
+    .soccer-plugin-container button {
+        font-family: 'Inter', sans-serif !important;
+        color: #e2e8f0 !important;
+    }
+    
+    .soccer-plugin-container input[type='text'],
+    .soccer-plugin-container input[type='email'],
+    .soccer-plugin-container input[type='password'],
+    .soccer-plugin-container input[type='number'],
+    .soccer-plugin-container input[type='date'],
+    .soccer-plugin-container select,
+    .soccer-plugin-container textarea {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #e2e8f0 !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .soccer-plugin-container input:focus,
+    .soccer-plugin-container select:focus,
+    .soccer-plugin-container textarea:focus {
+        outline: none !important;
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    }
+    
+    /* Button styles */
+    .soccer-plugin-container .btn,
+    .soccer-plugin-container button {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+    }
+    
+    .soccer-plugin-container .btn:hover,
+    .soccer-plugin-container button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3) !important;
+    }
+    
+    /* Table styles */
+    .soccer-plugin-container table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+    }
+    
+    .soccer-plugin-container th,
+    .soccer-plugin-container td {
+        padding: 16px !important;
+        text-align: left !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #e2e8f0 !important;
+    }
+    
+    .soccer-plugin-container th {
+        background: rgba(255, 255, 255, 0.1) !important;
+        font-weight: 600 !important;
+        color: #f1f5f9 !important;
+    }
+    
+    /* Custom checkbox styles */
+    .soccer-plugin-container .custom-checkbox {
+        display: inline-block !important;
+        position: relative !important;
+        width: 18px !important;
+        height: 18px !important;
+    }
+    
+    .soccer-plugin-container .custom-checkbox input[type='checkbox'] {
+        opacity: 0 !important;
+        width: 18px !important;
+        height: 18px !important;
+        margin: 0 !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        z-index: 2 !important;
+        cursor: pointer !important;
+    }
+    
+    .soccer-plugin-container .custom-checkbox span {
+        display: block !important;
+        width: 18px !important;
+        height: 18px !important;
+        border-radius: 4px !important;
+        border: 2px solid #22c55e !important;
+        background: transparent !important;
+        box-sizing: border-box !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        z-index: 1 !important;
+        pointer-events: none !important;
+    }
+    
+    .soccer-plugin-container .custom-checkbox input[type='checkbox']:checked + span {
+        background: #22c55e !important;
+        border-color: #22c55e !important;
+    }
+    
+    .soccer-plugin-container .custom-checkbox input[type='checkbox']:checked + span::after {
+        content: '' !important;
+        position: absolute !important;
+        left: 4px !important;
+        top: 0px !important;
+        width: 5px !important;
+        height: 10px !important;
+        border: solid #fff !important;
+        border-width: 0 2px 2px 0 !important;
+        transform: rotate(45deg) !important;
+        pointer-events: none !important;
+    }
+    
+    /* Blue card checkbox */
+    .soccer-plugin-container .blue-checkbox span {
+        border-color: #3b82f6 !important;
+    }
+    
+    .soccer-plugin-container .blue-checkbox input[type='checkbox']:checked + span {
+        background: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+    }
+    
+    /* Animation classes */
+    .soccer-plugin-container .animate-float {
+        animation: float 6s ease-in-out infinite !important;
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+    }
+    
+    .soccer-plugin-container .pulse-ring {
+        animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite !important;
+    }
+    
+    @keyframes pulse-ring {
+        0% {
+            transform: scale(0.8);
+        }
+        40%, 50% {
+            opacity: 0;
+        }
+        100% {
+            transform: scale(1.2);
+            opacity: 0;
+        }
+    }
+    
+    /* Sidebar animations */
+    .soccer-plugin-container .sidebar-item {
+        transition: all 0.3s ease !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    .soccer-plugin-container .sidebar-item::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: -100% !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent) !important;
+        transition: left 0.5s !important;
+    }
+    
+    .soccer-plugin-container .sidebar-item:hover::before {
+        left: 100% !important;
+    }
+    
+    /* Ensure proper font loading */
+    .soccer-plugin-container {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .soccer-plugin-container .glassmorphism {
+            margin: 8px !important;
+            padding: 16px !important;
+        }
+        
+        .soccer-plugin-container input,
+        .soccer-plugin-container select,
+        .soccer-plugin-container textarea {
+            font-size: 16px !important; /* Prevents zoom on iOS */
+        }
+    }
+    ";
 }
 // Hook into the 'wp_enqueue_scripts' action for front-end use
 add_action('wp_enqueue_scripts', 'your_plugin_enqueue_assets');
@@ -358,6 +640,7 @@ function your_plugin_display_dashboard_form($atts)
 
     // Use output buffering to capture the content of the HTML template file.
     ob_start();
+    echo '<div class="soccer-plugin-container">'; // Add scoped container
     $template_path = plugin_dir_path(__FILE__) . 'templates/admindashbaord.html';
     if (file_exists($template_path)) {
         // Include the template file. The HTML and inline JS will be rendered here.
@@ -366,6 +649,7 @@ function your_plugin_display_dashboard_form($atts)
         // Fallback if the template file is missing.
         echo '<p>Error: Dashboard template not found at ' . esc_html($template_path) . '</p>';
     }
+    echo '</div>'; // Close scoped container
     return ob_get_clean(); // Return the captured output.
 }
 // Register the shortcode so it can be used in WordPress content.
@@ -385,6 +669,7 @@ function your_plugin_display_referee_match_form($atts)
 
     // Use output buffering to capture the content of the HTML template file.
     ob_start();
+    echo '<div class="soccer-plugin-container">'; // Add scoped container
     $template_path = plugin_dir_path(__FILE__) . 'templates/referee-match-control.html';
     if (file_exists($template_path)) {
         // Include the template file. The HTML and inline JS will be rendered here.
@@ -393,6 +678,7 @@ function your_plugin_display_referee_match_form($atts)
         // Fallback if the template file is missing.
         echo '<p>Error: Referee dashboard template not found at ' . esc_html($template_path) . '</p>';
     }
+    echo '</div>'; // Close scoped container
     return ob_get_clean(); // Return the captured output.
 }
 
@@ -968,12 +1254,189 @@ function get_team_data_with_members($team_id)
     );
 }
 
-// Dequeue Astra theme styles on page ID 360 using a named function
-function custom_dequeue_astra_styles_on_specific_page()
+// Enhanced theme isolation function
+function your_plugin_isolate_from_theme()
 {
-    if (is_page('admin-dashboard') || is_page('referee-dashboard')) {
-        wp_dequeue_style('astra-theme-css');
-        wp_deregister_style('astra-theme-css');
+    global $post;
+
+    // Only apply theme isolation on pages with our shortcodes
+    if (
+        ! is_a($post, 'WP_Post') ||
+        (
+            ! has_shortcode($post->post_content, 'admin_dashboard_widget') &&
+            ! has_shortcode($post->post_content, 'start_match_shortcode')
+        )
+    ) {
+        return;
     }
+
+    // Remove theme styles that might interfere with our plugin
+    $theme_styles_to_remove = array(
+        'astra-theme-css',
+        'astra-woocommerce-css',
+        'astra-addon-css',
+        'beaver-builder-theme-css',
+        'bb-theme-css',
+        'bb-plugin-css'
+    );
+
+    foreach ($theme_styles_to_remove as $style_handle) {
+        if (wp_style_is($style_handle, 'enqueued')) {
+            wp_dequeue_style($style_handle);
+            wp_deregister_style($style_handle);
+        }
+    }
+
+    // Add custom CSS to ensure our plugin takes precedence
+    $isolation_css = "
+    /* Soccer Plugin Theme Isolation */
+    body.your-plugin-dashboard-active {
+        background: linear-gradient(to bottom right, #1e293b, #4c1d95, #1e293b) !important;
+        background-size: 200% 200% !important;
+        background-attachment: fixed !important;
+        color: #e2e8f0 !important;
+        min-height: 100vh !important;
+    }
+    
+    /* Ensure plugin container is isolated */
+    .soccer-plugin-container {
+        position: relative !important;
+        z-index: 1000 !important;
+        background: transparent !important;
+        color: inherit !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+    
+    /* Override any remaining theme styles */
+    .soccer-plugin-container * {
+        box-sizing: border-box !important;
+    }
+    
+    .soccer-plugin-container h1,
+    .soccer-plugin-container h2,
+    .soccer-plugin-container h3,
+    .soccer-plugin-container h4,
+    .soccer-plugin-container h5,
+    .soccer-plugin-container h6 {
+        color: #f1f5f9 !important;
+        font-weight: 600 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    .soccer-plugin-container p {
+        color: #e2e8f0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    /* Ensure forms are properly styled */
+    .soccer-plugin-container input,
+    .soccer-plugin-container select,
+    .soccer-plugin-container textarea {
+        font-family: 'Inter', sans-serif !important;
+        color: #e2e8f0 !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .soccer-plugin-container input:focus,
+    .soccer-plugin-container select:focus,
+    .soccer-plugin-container textarea:focus {
+        outline: none !important;
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    }
+    
+    /* Button isolation */
+    .soccer-plugin-container .btn,
+    .soccer-plugin-container button {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    .soccer-plugin-container .btn:hover,
+    .soccer-plugin-container button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3) !important;
+    }
+    
+    /* Table isolation */
+    .soccer-plugin-container table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+    }
+    
+    .soccer-plugin-container th,
+    .soccer-plugin-container td {
+        padding: 16px !important;
+        text-align: left !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #e2e8f0 !important;
+    }
+    
+    .soccer-plugin-container th {
+        background: rgba(255, 255, 255, 0.1) !important;
+        font-weight: 600 !important;
+        color: #f1f5f9 !important;
+    }
+    
+    /* Glassmorphism effect */
+    .soccer-plugin-container .glassmorphism {
+        background: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 16px !important;
+        padding: 24px !important;
+        margin: 16px 0 !important;
+    }
+    
+    /* Card hover effects */
+    .soccer-plugin-container .card-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    
+    .soccer-plugin-container .card-hover:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .soccer-plugin-container .glassmorphism {
+            margin: 8px !important;
+            padding: 16px !important;
+        }
+        
+        .soccer-plugin-container input,
+        .soccer-plugin-container select,
+        .soccer-plugin-container textarea {
+            font-size: 16px !important;
+        }
+    }
+    ";
+
+    wp_add_inline_style('your-plugin-style', $isolation_css);
 }
-add_action('wp_enqueue_scripts', 'custom_dequeue_astra_styles_on_specific_page', 100);
+
+// Hook the theme isolation function
+add_action('wp_enqueue_scripts', 'your_plugin_isolate_from_theme', 999);
