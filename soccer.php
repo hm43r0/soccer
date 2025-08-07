@@ -1055,11 +1055,28 @@ function your_plugin_fetch_matches_handler()
             $match_location = get_post_meta($post_id, '_match_location', true);
             $match_week = get_post_meta($post_id, '_match_week', true);
             $is_completed = get_post_meta($post_id, 'is_completed', true);
+            
+            // Get referee's first and last name
+            $referee_name = '';
+            if ($referee_id) {
+                $referee_user = get_userdata($referee_id);
+                if ($referee_user) {
+                    $first_name = get_user_meta($referee_id, 'first_name', true);
+                    $last_name = get_user_meta($referee_id, 'last_name', true);
+                    if (!empty($first_name) && !empty($last_name)) {
+                        $referee_name = trim($first_name . ' ' . $last_name);
+                    } else {
+                        // Fallback to display name or username if first/last name not available
+                        $referee_name = $referee_user->display_name ? $referee_user->display_name : $referee_user->user_login;
+                    }
+                }
+            }
+            
             $matches_data[] = array(
                 'id' => $post_id,
                 'team1Id' => $team1_id,
                 'team2Id' => $team2_id,
-                'referee' => $referee_id,
+                'referee' => $referee_name,
                 'date' => $match_date,
                 'location' => $match_location,
                 'week' => $match_week,

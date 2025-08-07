@@ -12,9 +12,20 @@ function your_plugin_fetch_referees_handler() {
     $referees = get_users( array( 'role' => 'referee' ) );
     $data = array();
     foreach ( $referees as $user ) {
+        // Get first and last name
+        $first_name = get_user_meta($user->ID, 'first_name', true);
+        $last_name = get_user_meta($user->ID, 'last_name', true);
+        
+        // Use first + last name if both are available, otherwise fallback to display name or username
+        if (!empty($first_name) && !empty($last_name)) {
+            $name = trim($first_name . ' ' . $last_name);
+        } else {
+            $name = $user->display_name ? $user->display_name : $user->user_login;
+        }
+        
         $data[] = array(
             'id' => $user->ID,
-            'name' => $user->display_name ? $user->display_name : $user->user_login
+            'name' => $name
         );
     }
     wp_send_json_success( $data );
