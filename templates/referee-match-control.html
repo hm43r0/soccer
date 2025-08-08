@@ -372,6 +372,16 @@
         color: rgba(255,255,255,0.6);
       }
 
+      /* Ensure reason UI is hidden by default and only shown when .hidden is removed */
+      .player-events-table select.reason-select,
+      .player-events-table input.reason-other-input {
+        display: none !important;
+      }
+      .player-events-table select.reason-select:not(.hidden),
+      .player-events-table input.reason-other-input:not(.hidden) {
+        display: inline-block !important;
+      }
+
       /* Force dropdown options readable colors */
       .player-events-table select.reason-select option {
         color: #111827;
