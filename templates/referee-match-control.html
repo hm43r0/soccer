@@ -105,6 +105,24 @@
 
       /* Yellow Card */
       .yellow-checkbox span {
+        border-color: #f59e0b;
+      }
+      .yellow-checkbox input[type="checkbox"]:checked + span {
+        background: #f59e0b;
+        border-color: #f59e0b;
+      }
+
+      /* Red Card */
+      .red-checkbox span {
+        border-color: #ef4444;
+      }
+      .red-checkbox input[type="checkbox"]:checked + span {
+        background: #ef4444;
+        border-color: #ef4444;
+      }
+
+      /* Yellow Card */
+      .yellow-checkbox span {
         border-color: #facc15;
       }
 
@@ -133,6 +151,7 @@
         margin: 0;
       }
       input[type="number"] {
+        appearance: textfield;
         -moz-appearance: textfield;
       }
 
@@ -195,6 +214,206 @@
       .image-popup-overlay.active {
         opacity: 1;
         visibility: visible;
+      }
+
+      /* Attendance Popup Styles */
+      .attendance-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        backdrop-filter: blur(10px);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .attendance-popup-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .attendance-popup-content {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 90vw;
+        max-height: 90vh;
+        width: 800px;
+        overflow-y: auto;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      }
+
+      .attendance-team-section {
+        margin-bottom: 24px;
+      }
+
+      .attendance-player-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        margin: 8px 0;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .attendance-player-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(4px);
+      }
+
+      .attendance-checkbox {
+        margin-right: 12px;
+        transform: scale(1.2);
+      }
+
+      .attendance-player-info {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .attendance-player-id {
+        background: rgba(99, 102, 241, 0.2);
+        color: #a5b4fc;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        min-width: 40px;
+        text-align: center;
+      }
+
+      .attendance-player-name {
+        color: #e2e8f0;
+        font-weight: 500;
+      }
+
+      .attendance-popup-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .attendance-btn {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+      }
+
+      .attendance-btn-cancel {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+
+      .attendance-btn-cancel:hover {
+        background: rgba(239, 68, 68, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .attendance-btn-start {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+      }
+
+      .attendance-btn-start:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+      }
+
+      .attendance-btn-start:disabled {
+        background: rgba(107, 114, 128, 0.5);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .select-all-checkbox {
+        transform: scale(1.1);
+        margin-right: 6px;
+      }
+
+      .attendance-team-section {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 20px;
+      }
+
+      .attendance-team-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      /* Card reason dropdown/input tweaks */
+      .player-events-table select.reason-select {
+        background: #fff;
+        color: #111827;
+        appearance: auto;
+        -webkit-appearance: auto;
+        -moz-appearance: auto;
+      }
+      .player-events-table input.reason-other-input::placeholder {
+        color: rgba(255,255,255,0.6);
+      }
+
+      /* Force dropdown options readable colors */
+      .player-events-table select.reason-select option {
+        color: #111827;
+        background: #ffffff;
+      }
+
+      /* Score Edit Popup Styles */
+      .score-edit-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        backdrop-filter: blur(10px);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+      .score-edit-popup-overlay.active { opacity: 1; visibility: visible; }
+      .score-edit-popup-content {
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 16px;
+        width: 95vw;
+        max-width: 1100px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 16px;
+      }
+      .score-edit-popup-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px; }
+      .score-edit-close {
+        background: rgba(239,68,68,0.2);
+        border: 1px solid rgba(239,68,68,0.3);
+        color: #fecaca;
+        border-radius: 8px;
+        padding: 6px 10px;
+        cursor: pointer;
       }
 
       .image-popup-content {
@@ -418,6 +637,46 @@
       </div>
     </div>
 
+    <!-- Attendance Popup Modal -->
+    <div id="attendancePopup" class="attendance-popup-overlay">
+      <div class="attendance-popup-content">
+        <h2 class="text-2xl font-bold text-white mb-6 text-center">
+          Mark Player Attendance
+        </h2>
+        <div id="attendanceContent">
+          <!-- Attendance content will be populated by JavaScript -->
+        </div>
+        <div class="attendance-popup-buttons">
+          <button
+            type="button"
+            class="attendance-btn attendance-btn-cancel"
+            onclick="closeAttendancePopup()"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            id="startMatchBtn"
+            class="attendance-btn attendance-btn-start"
+            onclick="proceedWithMatch()"
+          >
+            Start Match
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score Edit Popup Modal -->
+    <div id="scoreEditPopup" class="score-edit-popup-overlay">
+      <div class="score-edit-popup-content">
+        <div class="score-edit-popup-header">
+          <h2 class="text-xl font-semibold text-white">Match Score & Cards</h2>
+          <button class="score-edit-close" onclick="window.closeScoreEditPopup()">Close</button>
+        </div>
+        <div id="scoreEditRoot" class="p-2"></div>
+      </div>
+    </div>
+
     <script>
       // Image Popup Functions
       function openImagePopup(imageUrl, altText) {
@@ -453,6 +712,15 @@
         document.addEventListener("keydown", function (e) {
           if (e.key === "Escape") {
             closeImagePopup();
+            closeAttendancePopup();
+          }
+        });
+
+        // Add attendance popup event listeners
+        const attendancePopup = document.getElementById("attendancePopup");
+        attendancePopup.addEventListener("click", function (e) {
+          if (e.target === attendancePopup) {
+            closeAttendancePopup();
           }
         });
       });
@@ -461,6 +729,10 @@
         let allMatches = []; // Store all match data including teams and players
 
         function loadRefereeMatches() {
+          // Reset attendance data when loading matches
+          attendanceData = { team1: [], team2: [] };
+          currentMatchId = null;
+          
           $.ajax({
             url: your_plugin_ajax_object.ajax_url,
             type: "POST",
@@ -612,22 +884,267 @@
             html += matchCard(
               match,
               '<span class="inline-block px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-semibold">Completed</span>',
-              `<button class="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white py-2 px-4 rounded-lg font-semibold cursor-not-allowed opacity-60" disabled>Completed</button>`,
+              `<div class="mt-4 grid grid-cols-1 gap-2">
+                 <button class="w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white py-2 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-800 transition-all view-score-btn" data-match-id="${match.id}">View / Edit Score</button>
+               </div>`,
               "opacity-70"
             );
           });
           $("#referee-matches-list").html(html);
         }
 
-        // Card Start Match button click
+        // Card Start Match button click - Modified to show attendance popup first
         $(document).on("click", ".start-match-card-btn", function () {
           const matchId = $(this).data("match-id");
           if (!matchId) return;
-          // Hide match list and stat cards, show admin start match section
+          
+          const match = allMatches.find((m) => m.id == matchId);
+          if (!match) {
+            showMessage("Match not found!", "error");
+            return;
+          }
+          
+          // Show attendance popup instead of directly starting match
+          showAttendancePopup(matchId);
+        });
+
+        // Open score edit popup for completed match
+        $(document).on('click', '.view-score-btn', function () {
+          const matchId = $(this).data('match-id');
+          if (!matchId) return;
+          openScoreEditPopup(matchId);
+        });
+
+        function openScoreEditPopup(matchId) {
+          const match = allMatches.find((m) => m.id == matchId);
+          if (!match) { showMessage('Match not found.', 'error'); return; }
+
+          // Show loading
+          $('#scoreEditRoot').html('<div class="text-white/80 p-6">Loading match data...</div>');
+          $('#scoreEditPopup').addClass('active');
+
+          // Fetch saved summary/meta for this match
+          $.ajax({
+            url: your_plugin_ajax_object.ajax_url,
+            type: 'POST',
+            data: { action: 'your_plugin_get_match_summary', nonce: your_plugin_ajax_object.nonce, match_id: matchId },
+            success: function (resp) {
+              // Build team members as in start flow
+              fetchTeamMembers(match.team1Id, match.team2Id, function (team1Data, team2Data) {
+                const team1 = { name: team1Data.name || match.team1Name || 'Unknown Team', members: team1Data.members || [], jersey_image_url: team1Data.jersey_image_url || null };
+                const team2 = { name: team2Data.name || match.team2Name || 'Unknown Team', members: team2Data.members || [], jersey_image_url: team2Data.jersey_image_url || null };
+
+                // Render match UI inside popup root (re-using same renderer)
+                renderMatchInterfaceInto('#scoreEditRoot', match, team1, team2, resp && resp.success ? resp.data : null);
+              });
+            },
+            error: function () {
+              showMessage('Failed to load match data.', 'error');
+            }
+          });
+        }
+
+        function closeScoreEditPopup() {
+          $('#scoreEditPopup').removeClass('active');
+          $('#scoreEditRoot').empty();
+        }
+        window.closeScoreEditPopup = closeScoreEditPopup;
+
+        // Global variables for attendance
+        let currentMatchId = null;
+        let attendanceData = {
+          team1: [],
+          team2: []
+        };
+
+        function showAttendancePopup(matchId) {
+          currentMatchId = matchId;
+          const match = allMatches.find((m) => m.id == matchId);
+          
+          // Fetch team members for attendance
+          fetchTeamMembers(
+            match.team1Id,
+            match.team2Id,
+            function (team1Data, team2Data) {
+              renderAttendancePopup(match, team1Data, team2Data);
+              $("#attendancePopup").addClass("active");
+            }
+          );
+        }
+
+        function renderAttendancePopup(match, team1Data, team2Data) {
+          const team1 = {
+            name: team1Data.name || match.team1Name || "Unknown Team",
+            members: team1Data.members || [],
+            jersey_image_url: team1Data.jersey_image_url || null
+          };
+          const team2 = {
+            name: team2Data.name || match.team2Name || "Unknown Team", 
+            members: team2Data.members || [],
+            jersey_image_url: team2Data.jersey_image_url || null
+          };
+
+          let attendanceHtml = '';
+          
+          // Team 1 Attendance Section
+          attendanceHtml += `
+            <div class="attendance-team-section">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                  ${team1.jersey_image_url ? `<img src="${team1.jersey_image_url}" alt="${team1.name} Jersey" class="w-12 h-12 rounded-full object-cover mr-3 border-2 border-white/20">` : ''}
+                  <h3 class="text-xl font-bold text-white">${team1.name}</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" id="selectAllTeam1" class="select-all-checkbox" data-team="1">
+                  <label for="selectAllTeam1" class="text-sm text-gray-300 cursor-pointer">Select All</label>
+                </div>
+              </div>
+              <div class="space-y-2">
+          `;
+
+          team1.members.forEach(member => {
+            attendanceHtml += `
+              <div class="attendance-player-item">
+                <input type="checkbox" class="attendance-checkbox team-1-checkbox" data-team="1" data-player-id="${member.id}" data-player-name="${member.name}">
+                <div class="attendance-player-info">
+                  <div class="attendance-player-id">${member.id}</div>
+                  <div class="attendance-player-name">${member.name}</div>
+                </div>
+              </div>
+            `;
+          });
+
+          attendanceHtml += `
+              </div>
+            </div>
+          `;
+
+          // Team 2 Attendance Section
+          attendanceHtml += `
+            <div class="attendance-team-section">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                  ${team2.jersey_image_url ? `<img src="${team2.jersey_image_url}" alt="${team2.name} Jersey" class="w-12 h-12 rounded-full object-cover mr-3 border-2 border-white/20">` : ''}
+                  <h3 class="text-xl font-bold text-white">${team2.name}</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" id="selectAllTeam2" class="select-all-checkbox" data-team="2">
+                  <label for="selectAllTeam2" class="text-sm text-gray-300 cursor-pointer">Select All</label>
+                </div>
+              </div>
+              <div class="space-y-2">
+          `;
+
+          team2.members.forEach(member => {
+            attendanceHtml += `
+              <div class="attendance-player-item">
+                <input type="checkbox" class="attendance-checkbox team-2-checkbox" data-team="2" data-player-id="${member.id}" data-player-name="${member.name}">
+                <div class="attendance-player-info">
+                  <div class="attendance-player-id">${member.id}</div>
+                  <div class="attendance-player-name">${member.name}</div>
+                </div>
+              </div>
+            `;
+          });
+
+          attendanceHtml += `
+              </div>
+            </div>
+          `;
+
+          $("#attendanceContent").html(attendanceHtml);
+          
+          // Add change event listeners to attendance checkboxes
+          $(".attendance-checkbox").on("change", function() {
+            updateStartMatchButton();
+            updateSelectAllState();
+          });
+          
+          // Add select all functionality
+          $(".select-all-checkbox").on("change", function() {
+            const team = $(this).data("team");
+            const isChecked = $(this).prop("checked");
+            
+            if (team === "1" || team === 1) {
+              $(".team-1-checkbox").prop("checked", isChecked);
+            } else if (team === "2" || team === 2) {
+              $(".team-2-checkbox").prop("checked", isChecked);
+            }
+            
+            updateStartMatchButton();
+          });
+          
+          updateStartMatchButton();
+        }
+
+        function updateSelectAllState() {
+          // Update Team 1 select all state
+          const team1Total = $(".team-1-checkbox").length;
+          const team1Checked = $(".team-1-checkbox:checked").length;
+          $("#selectAllTeam1").prop("checked", team1Total > 0 && team1Checked === team1Total);
+          
+          // Update Team 2 select all state  
+          const team2Total = $(".team-2-checkbox").length;
+          const team2Checked = $(".team-2-checkbox:checked").length;
+          $("#selectAllTeam2").prop("checked", team2Total > 0 && team2Checked === team2Total);
+        }
+
+        function updateStartMatchButton() {
+          const checkedBoxes = $(".attendance-checkbox:checked").length;
+          const startBtn = $("#startMatchBtn");
+          
+          if (checkedBoxes > 0) {
+            startBtn.prop("disabled", false);
+            startBtn.text(`Start Match (${checkedBoxes} players present)`);
+          } else {
+            startBtn.prop("disabled", true);
+            startBtn.text("Start Match (No players selected)");
+          }
+        }
+
+        function closeAttendancePopup(reset) {
+          $("#attendancePopup").removeClass("active");
+          // By default, reset state unless explicitly passed false
+          if (reset !== false) {
+            currentMatchId = null;
+            attendanceData = { team1: [], team2: [] };
+          }
+        }
+
+        function proceedWithMatch() {
+          // Collect attendance data
+          attendanceData.team1 = [];
+          attendanceData.team2 = [];
+          
+          $(".attendance-checkbox:checked").each(function() {
+            const team = $(this).data("team");
+            const playerId = $(this).data("player-id");
+            const playerName = $(this).data("player-name");
+            
+            const playerData = { id: playerId, name: playerName };
+            
+            if (team === "1" || team === 1) {
+              attendanceData.team1.push(playerData);
+            } else if (team === "2" || team === 2) {
+              attendanceData.team2.push(playerData);
+            }
+          });
+          
+          // Preserve match id before closing the popup
+          const matchIdToStart = currentMatchId;
+
+          // Close attendance popup
+          closeAttendancePopup(false); // don't reset state when proceeding
+          
+          // Now proceed with the original match start logic
           $("#referee-matches-list, #referee-stat-cards").addClass("hidden");
           $("#admin-start-match-root").removeClass("hidden");
-          renderAdminStartMatch(matchId);
-        });
+          renderAdminStartMatch(matchIdToStart);
+        }
+
+        // Expose functions globally for inline handlers
+        window.proceedWithMatch = proceedWithMatch;
+        window.closeAttendancePopup = closeAttendancePopup;
 
         function renderAdminStartMatch(matchId) {
           const match = allMatches.find((m) => m.id == matchId);
@@ -647,32 +1164,64 @@
             '<div class="text-white text-center py-10">Loading team data...</div>'
           );
 
-          // Fetch team members if not already available
-          fetchTeamMembers(
-            match.team1Id,
-            match.team2Id,
-            function (team1Data, team2Data) {
-              console.log("Team 1 data received:", team1Data);
-              console.log("Team 2 data received:", team2Data);
+          // Check if we have attendance data (from attendance popup)
+          if (attendanceData.team1.length > 0 || attendanceData.team2.length > 0) {
+            // Use attendance data instead of fetching all team members
+            fetchTeamMembers(
+              match.team1Id,
+              match.team2Id,
+              function (team1Data, team2Data) {
+                console.log("Team 1 data received:", team1Data);
+                console.log("Team 2 data received:", team2Data);
+                console.log("Using attendance data - Team 1:", attendanceData.team1);
+                console.log("Using attendance data - Team 2:", attendanceData.team2);
 
-              // Get team objects with members
-              const team1 = {
-                name: team1Data.name || match.team1Name || "Unknown Team",
-                members: team1Data.members || [],
-                jersey_image_url: team1Data.jersey_image_url || null, // Add jersey_image_url
-              };
-              const team2 = {
-                name: team2Data.name || match.team2Name || "Unknown Team",
-                members: team2Data.members || [],
-                jersey_image_url: team2Data.jersey_image_url || null, // Add jersey_image_url
-              };
+                // Get team objects with ONLY present members from attendance
+                const team1 = {
+                  name: team1Data.name || match.team1Name || "Unknown Team",
+                  members: attendanceData.team1, // Use only present players
+                  jersey_image_url: team1Data.jersey_image_url || null,
+                };
+                const team2 = {
+                  name: team2Data.name || match.team2Name || "Unknown Team",
+                  members: attendanceData.team2, // Use only present players
+                  jersey_image_url: team2Data.jersey_image_url || null,
+                };
 
-              console.log("Final team1 object:", team1);
-              console.log("Final team2 object:", team2);
+                console.log("Final team1 object with attendance:", team1);
+                console.log("Final team2 object with attendance:", team2);
 
-              renderMatchInterface(match, team1, team2);
-            }
-          );
+                renderMatchInterface(match, team1, team2);
+              }
+            );
+          } else {
+            // Fallback to original behavior (fetch all team members)
+            fetchTeamMembers(
+              match.team1Id,
+              match.team2Id,
+              function (team1Data, team2Data) {
+                console.log("Team 1 data received:", team1Data);
+                console.log("Team 2 data received:", team2Data);
+
+                // Get team objects with all members (original behavior)
+                const team1 = {
+                  name: team1Data.name || match.team1Name || "Unknown Team",
+                  members: team1Data.members || [],
+                  jersey_image_url: team1Data.jersey_image_url || null,
+                };
+                const team2 = {
+                  name: team2Data.name || match.team2Name || "Unknown Team",
+                  members: team2Data.members || [],
+                  jersey_image_url: team2Data.jersey_image_url || null,
+                };
+
+                console.log("Final team1 object:", team1);
+                console.log("Final team2 object:", team2);
+
+                renderMatchInterface(match, team1, team2);
+              }
+            );
+          }
         }
 
         function fetchTeamMembers(team1Id, team2Id, callback) {
@@ -718,6 +1267,378 @@
           });
         }
 
+        // Global table renderer so both main flow and edit popup can reuse it
+        function renderPlayerEventsTable(
+          $container,
+          playerEvents,
+          teamGoals
+        ) {
+          const goalColumnCount = Math.max(8, (teamGoals || []).length);
+          // Build a quick id->name map from the team members attached to this card
+          const teamMembers = $container.closest('.team-scoring-card').data('teamMembers') || [];
+          const nameMap = {};
+          teamMembers.forEach(m => { nameMap[m.id] = m.name; });
+
+          // Helper to count goals for a player
+          function countGoalsFor(playerId) {
+            return (teamGoals || []).filter(pid => pid == playerId).length;
+          }
+
+          // Predefine standard reasons per card type
+          const reasons = {
+            blue: [
+              { code: 'time_wasting', label: 'Time wasting' },
+              { code: 'encroachment', label: 'Encroachment' },
+              { code: 'dissent', label: 'Dissent' },
+              { code: 'unsporting', label: 'Unsporting behavior' },
+              { code: 'other', label: 'Other...' }
+            ],
+            yellow: [
+              { code: 'unsporting', label: 'Unsporting behavior' },
+              { code: 'dissent', label: 'Dissent' },
+              { code: 'persistence', label: 'Persistent infringement' },
+              { code: 'delay', label: 'Delaying restart' },
+              { code: 'other', label: 'Other...' }
+            ],
+            red: [
+              { code: 'serious_foul', label: 'Serious foul play' },
+              { code: 'violent', label: 'Violent conduct' },
+              { code: 'spitting', label: 'Spitting' },
+              { code: 'denying_goal', label: 'Denying goal-scoring opp.' },
+              { code: 'other', label: 'Other...' }
+            ]
+          };
+
+          let table = `
+              <div class="player-events-table">
+                <table class="min-w-full text-xs text-white border border-white/10 rounded-lg overflow-hidden mt-6">
+                  <thead>
+                    <tr>
+                      <th class="px-2 py-1 border-b border-white/10">Player ID</th>
+                      <th class="px-2 py-1 border-b border-white/10">Player Name</th>
+                      <th class="px-2 py-1 border-b border-white/10">Total Goals</th>
+                      ${[...Array(goalColumnCount)]
+                        .map(
+                          (_, i) =>
+                            `<th class="px-2 py-1 border-b border-white/10">${
+                              i + 1
+                            }</th>`
+                        )
+                        .join("")}
+                      <th class="px-2 py-1 border-b border-white/10 text-blue-400">Blue</th>
+                      <th class="px-2 py-1 border-b border-white/10 text-yellow-400">Yellow</th>
+                      <th class="px-2 py-1 border-b border-white/10 text-red-400">Red</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${playerEvents
+                      .map(
+                        (ev) => `
+                      <tr>
+                        <td class="px-2 py-1 border-b border-white/10 text-center">${
+                          ev.id
+                        }</td>
+                        <td class="px-2 py-1 border-b border-white/10 text-center">${
+                          nameMap[ev.id] ? nameMap[ev.id] : ''
+                        }</td>
+                        <td class="px-2 py-1 border-b border-white/10 text-center">${countGoalsFor(ev.id)}</td>
+                        ${Array.from({ length: goalColumnCount }, (_, i) => {
+                          const scorerId = (teamGoals || [])[i];
+                          return `<td class="px-2 py-1 border-b border-white/10 text-center">
+                                <label class="custom-checkbox">
+                                  <input type="checkbox" data-player-id="${
+                                    ev.id
+                                  }" data-goal-index="${i}" class="goal-checkbox" ${
+                            scorerId && scorerId == ev.id ? "checked" : ""
+                          }>
+                                  <span></span>
+                                </label>
+                              </td>`;
+                        }).join("")}
+                        <td class="px-2 py-1 border-b border-white/10 text-center">
+                          <div class="reason-inline flex items-center justify-center gap-2">
+                            <select class="reason-select text-xs rounded px-1 py-0.5 ${ev.blue ? '' : 'hidden'}" data-player-id="${ev.id}" data-card-type="blue">
+                              <option value="" ${!ev.blue_reason_code ? 'selected' : ''} disabled>Choose reason</option>
+                              ${reasons.blue.map(r => `<option value="${r.code}" ${ev.blue_reason_code===r.code ? 'selected' : ''}>${r.label}</option>`).join('')}
+                            </select>
+                            <input type="text" placeholder="Enter reason" class="reason-other-input text-xs px-2 py-1 rounded bg-white/10 border border-white/20 text-white ${ev.blue && ev.blue_reason_code==='other' ? '' : 'hidden'}" data-player-id="${ev.id}" data-card-type="blue" value="${ev.blue_reason_code==='other' ? (ev.blue_reason_text||'') : ''}">
+                            <label class="custom-checkbox blue-checkbox">
+                              <input type="checkbox" data-player-id="${ev.id}" data-card-type="blue" class="card-checkbox" ${ev.blue ? "checked" : ""}>
+                              <span></span>
+                            </label>
+                          </div>
+                        </td>
+                        <td class="px-2 py-1 border-b border-white/10 text-center">
+                          <div class="reason-inline flex items-center justify-center gap-2">
+                            <select class="reason-select text-xs rounded px-1 py-0.5 ${ev.yellow ? '' : 'hidden'}" data-player-id="${ev.id}" data-card-type="yellow">
+                              <option value="" ${!ev.yellow_reason_code ? 'selected' : ''} disabled>Choose reason</option>
+                              ${reasons.yellow.map(r => `<option value="${r.code}" ${ev.yellow_reason_code===r.code ? 'selected' : ''}>${r.label}</option>`).join('')}
+                            </select>
+                            <input type="text" placeholder="Enter reason" class="reason-other-input text-xs px-2 py-1 rounded bg-white/10 border border-white/20 text-white ${ev.yellow && ev.yellow_reason_code==='other' ? '' : 'hidden'}" data-player-id="${ev.id}" data-card-type="yellow" value="${ev.yellow_reason_code==='other' ? (ev.yellow_reason_text||'') : ''}">
+                            <label class="custom-checkbox yellow-checkbox">
+                              <input type="checkbox" data-player-id="${ev.id}" data-card-type="yellow" class="card-checkbox" ${ev.yellow ? "checked" : ""}>
+                              <span></span>
+                            </label>
+                          </div>
+                        </td>
+                        <td class="px-2 py-1 border-b border-white/10 text-center">
+                          <div class="reason-inline flex items-center justify-center gap-2">
+                            <select class="reason-select text-xs rounded px-1 py-0.5 ${ev.red ? '' : 'hidden'}" data-player-id="${ev.id}" data-card-type="red">
+                              <option value="" ${!ev.red_reason_code ? 'selected' : ''} disabled>Choose reason</option>
+                              ${reasons.red.map(r => `<option value="${r.code}" ${ev.red_reason_code===r.code ? 'selected' : ''}>${r.label}</option>`).join('')}
+                            </select>
+                            <input type="text" placeholder="Enter reason" class="reason-other-input text-xs px-2 py-1 rounded bg-white/10 border border-white/20 text-white ${ev.red && ev.red_reason_code==='other' ? '' : 'hidden'}" data-player-id="${ev.id}" data-card-type="red" value="${ev.red_reason_code==='other' ? (ev.red_reason_text||'') : ''}">
+                            <label class="custom-checkbox red-checkbox">
+                              <input type="checkbox" data-player-id="${ev.id}" data-card-type="red" class="card-checkbox" ${ev.red ? "checked" : ""}>
+                              <span></span>
+                            </label>
+                          </div>
+                        </td>
+                      </tr>
+                    `
+                      )
+                      .join("")}
+                  </tbody>
+                </table>
+              </div>
+          `;
+          $container.html(table);
+
+          // Add event listeners for goal checkboxes
+          $container.find(".goal-checkbox").on("change", function () {
+            const playerId = $(this).data("player-id");
+            const goalIndex = $(this).data("goal-index");
+            const isChecked = $(this).prop("checked");
+
+            let teamGoalsLocal = $container
+              .closest(".team-scoring-card")
+              .data("teamGoals") || [];
+
+            if (isChecked) {
+              // Add goal at specific index
+              teamGoalsLocal[goalIndex] = playerId;
+            } else {
+              // Remove goal at specific index
+              teamGoalsLocal[goalIndex] = undefined;
+            }
+
+            // Update team goals data
+            $container
+              .closest(".team-scoring-card")
+              .data("teamGoals", teamGoalsLocal);
+
+            // Re-render table to reflect changes
+            const playerEventsLocal = $container
+              .closest(".team-scoring-card")
+              .data("playerEvents") || [];
+            renderPlayerEventsTable($container, playerEventsLocal, teamGoalsLocal);
+          });
+
+          // Add event listeners for card checkboxes
+          $container.find(".card-checkbox").on("change", function () {
+            const playerId = $(this).data("player-id");
+            const cardType = $(this).data("card-type");
+            const isChecked = $(this).prop("checked");
+
+            let playerEventsLocal = $container
+              .closest(".team-scoring-card")
+              .data("playerEvents") || [];
+            let player = playerEventsLocal.find((ev) => ev.id == playerId);
+
+            if (player) {
+              player[cardType] = isChecked;
+              // Reset reason fields when unchecked
+              if (!isChecked) {
+                player[cardType + '_reason_code'] = '';
+                player[cardType + '_reason_text'] = '';
+              }
+
+              // Update player events data
+              $container
+                .closest(".team-scoring-card")
+                .data("playerEvents", playerEventsLocal);
+            }
+
+            // Toggle reason UI visibility (dropdown and optional other input)
+            const cell = $(this).closest('td');
+            const reasonSelect = cell.find('select.reason-select[data-card-type="' + cardType + '"][data-player-id="' + playerId + '"]');
+            const otherInput = cell.find('input.reason-other-input[data-card-type="' + cardType + '"][data-player-id="' + playerId + '"]');
+            if (isChecked) {
+              reasonSelect.removeClass('hidden');
+              // show other input only when 'other' is currently selected
+              if ((player && player[cardType + '_reason_code']) === 'other') {
+                otherInput.removeClass('hidden');
+              }
+            } else {
+              reasonSelect.addClass('hidden');
+              otherInput.addClass('hidden');
+            }
+          });
+
+          // Reason select changes
+          $container.find('.reason-select').on('change', function() {
+            const playerId = $(this).data('player-id');
+            const cardType = $(this).data('card-type');
+            const code = $(this).val();
+            const cell = $(this).closest('td');
+            const otherInput = cell.find('.reason-other-input');
+
+            let playerEventsLocal = $container.closest('.team-scoring-card').data('playerEvents') || [];
+            let player = playerEventsLocal.find((ev) => ev.id == playerId);
+            if (player) {
+              player[cardType + '_reason_code'] = code;
+              if (code === 'other') {
+                otherInput.removeClass('hidden');
+                // keep existing text if any
+              } else {
+                otherInput.addClass('hidden');
+                // Set text to the label of the selected option
+                const label = $(this).find('option:selected').text();
+                player[cardType + '_reason_text'] = label;
+              }
+              $container.closest('.team-scoring-card').data('playerEvents', playerEventsLocal);
+            }
+          });
+
+          // Reason other input changes
+          $container.find('.reason-other-input').on('input', function() {
+            const playerId = $(this).data('player-id');
+            const cardType = $(this).data('card-type');
+            const text = $(this).val();
+            let playerEventsLocal = $container.closest('.team-scoring-card').data('playerEvents') || [];
+            let player = playerEventsLocal.find((ev) => ev.id == playerId);
+            if (player) {
+              player[cardType + '_reason_text'] = text;
+              $container.closest('.team-scoring-card').data('playerEvents', playerEventsLocal);
+            }
+          });
+        }
+
+        // Wrapper to render into an arbitrary container, with optional initialData (from saved meta)
+        function renderMatchInterfaceInto(containerSelector, match, team1, team2, initialData) {
+          // Render as usual, but place generated HTML into the given container
+          const $container = $(containerSelector);
+          // We temporarily override #admin-start-match-root target by injecting HTML into this container
+          // Save reference to append area
+          const originalRoot = $('#admin-start-match-root');
+          const tempRoot = $('<div></div>');
+          originalRoot.append(tempRoot);
+          // Call existing renderer which writes into #admin-start-match-root
+          renderMatchInterface(match, team1, team2);
+          // Move produced content into our target container
+          $container.html(originalRoot.children().detach());
+
+          // Prefill with initialData if provided
+          if (initialData) {
+            try {
+              // initialData is expected to include score_data JSON string and other fields
+              const data = initialData;
+              if (data.score_data) {
+                const parsed = typeof data.score_data === 'string' ? JSON.parse(data.score_data) : data.score_data;
+                // Apply goals/cards to UI state
+                const $cards = $container.find('.team-scoring-card');
+                function applyTeam(cardIdx, teamObj) {
+                  const $card = $cards.eq(cardIdx);
+                  let playerEvents = $card.data('playerEvents') || [];
+                  let teamGoals = [];
+                  (teamObj.goals || []).forEach(g => { teamGoals[g.goalIndex - 1] = g.playerId; });
+                  (teamObj.cards || []).forEach(c => {
+                    let p = playerEvents.find(ev => ev.id == c.playerId);
+                    if (!p) {
+                      p = { id: c.playerId, blue:false,yellow:false,red:false, blue_reason_code:'',blue_reason_text:'',yellow_reason_code:'',yellow_reason_text:'',red_reason_code:'',red_reason_text:'' };
+                      playerEvents.push(p);
+                    }
+                    p.blue = !!c.blue; p.yellow = !!c.yellow; p.red = !!c.red;
+                    p.blue_reason_code = c.blue_reason_code || ''; p.blue_reason_text = c.blue_reason_text || '';
+                    p.yellow_reason_code = c.yellow_reason_code || ''; p.yellow_reason_text = c.yellow_reason_text || '';
+                    p.red_reason_code = c.red_reason_code || ''; p.red_reason_text = c.red_reason_text || '';
+                  });
+                  $card.data('playerEvents', playerEvents);
+                  $card.data('teamGoals', teamGoals);
+                  const $tableContainer = $card.find('.events-table-container');
+                  renderPlayerEventsTable($tableContainer, playerEvents, teamGoals);
+                }
+                if (parsed.team1) applyTeam(0, parsed.team1);
+                if (parsed.team2) applyTeam(1, parsed.team2);
+              }
+              // Prefill summary fields
+              if (data.final_score) $container.find('input[name="final_score"]').val(data.final_score);
+              if (data.first_half_fouls) $container.find('input[name="first_half_fouls"]').val(data.first_half_fouls);
+              if (data.second_half_fouls) $container.find('input[name="second_half_fouls"]').val(data.second_half_fouls);
+              if (data.caution_desc) $container.find('textarea[name="caution_desc"]').val(data.caution_desc);
+              if (data.additional_notes) $container.find('textarea[name="additional_notes"]').val(data.additional_notes);
+            } catch(e) {
+              console.warn('Failed to prefill score data', e);
+            }
+          }
+
+          // Override submit to keep popup open and refresh list on save
+          $container.find('#matchSummaryForm').off('submit').on('submit', function(e){
+            e.preventDefault();
+            // Reuse the save logic by temporarily moving DOM back into original root to use existing handler
+            const form = this;
+            // Call original save handler by triggering it programmatically
+            // Extract final payload same as original
+            const finalScore = form.final_score.value;
+            const firstHalfFouls = form.first_half_fouls.value;
+            const secondHalfFouls = form.second_half_fouls.value;
+            const cautionDesc = form.caution_desc.value;
+            const additionalNotes = form.additional_notes.value;
+
+            const $cards = $container.find('.team-scoring-card');
+            const team1Card = $cards.eq(0);
+            const team2Card = $cards.eq(1);
+            function getTeamScoreData($card, teamId) {
+              const goals = ($card.data('teamGoals') || []).map((pid, idx) => ({ playerId: pid, goalIndex: idx + 1 }));
+              const cardsArr = ($card.data('playerEvents') || []).map((ev) => ({
+                playerId: ev.id,
+                blue: !!ev.blue,
+                yellow: !!ev.yellow,
+                red: !!ev.red,
+                blue_reason_code: ev.blue ? (ev.blue_reason_code || '') : '',
+                blue_reason_text: ev.blue ? (ev.blue_reason_text || '') : '',
+                yellow_reason_code: ev.yellow ? (ev.yellow_reason_code || '') : '',
+                yellow_reason_text: ev.yellow ? (ev.yellow_reason_text || '') : '',
+                red_reason_code: ev.red ? (ev.red_reason_code || '') : '',
+                red_reason_text: ev.red ? (ev.red_reason_text || '') : ''
+              }));
+              return { id: teamId, goals, cards: cardsArr };
+            }
+            const scoreData = JSON.stringify({
+              team1: getTeamScoreData(team1Card, match.team1Id),
+              team2: getTeamScoreData(team2Card, match.team2Id),
+            });
+
+            $.ajax({
+              url: your_plugin_ajax_object.ajax_url,
+              type: 'POST',
+              data: {
+                action: 'save_soccer_match_summary',
+                nonce: your_plugin_ajax_object.nonce,
+                match_id: match.id,
+                final_score: finalScore,
+                first_half_fouls: firstHalfFouls,
+                second_half_fouls: secondHalfFouls,
+                caution_desc: cautionDesc,
+                additional_notes: additionalNotes,
+                score_data: scoreData,
+              },
+              success: function (response) {
+                if (response.success) {
+                  showMessage('Match summary updated!', 'success');
+                  loadRefereeMatches();
+                  // keep popup open or close—close for now
+                  closeScoreEditPopup();
+                } else {
+                  showMessage(response.data && response.data.message ? response.data.message : 'Failed to save match summary.', 'error');
+                }
+              },
+              error: function () { showMessage('Error saving match summary.', 'error'); }
+            });
+          });
+        }
+
+        // Existing renderer, kept intact for start-match flow
         function renderMatchInterface(match, team1, team2) {
           const matchId = match.id; // Store matchId for use in form handlers
           const team1Name = team1.name;
@@ -760,143 +1681,7 @@
             </form>
         `;
 
-          function renderPlayerEventsTable(
-            $container,
-            playerEvents,
-            teamGoals
-          ) {
-            const goalColumnCount = Math.max(8, teamGoals.length);
-            let table = `
-                <div class="player-events-table">
-                  <table class="min-w-full text-xs text-white border border-white/10 rounded-lg overflow-hidden mt-6">
-                    <thead>
-                      <tr>
-                        <th class="px-2 py-1 border-b border-white/10">Player ID</th>
-                        ${[...Array(goalColumnCount)]
-                          .map(
-                            (_, i) =>
-                              `<th class="px-2 py-1 border-b border-white/10">${
-                                i + 1
-                              }</th>`
-                          )
-                          .join("")}
-                        <th class="px-2 py-1 border-b border-white/10 text-blue-400">Blue</th>
-                        <th class="px-2 py-1 border-b border-white/10 text-yellow-400">Yellow</th>
-                        <th class="px-2 py-1 border-b border-white/10 text-red-400">Red</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${playerEvents
-                        .map(
-                          (ev) => `
-                        <tr>
-                          <td class="px-2 py-1 border-b border-white/10 text-center">${
-                            ev.id
-                          }</td>
-                          ${Array.from({ length: goalColumnCount }, (_, i) => {
-                            const scorerId = teamGoals[i];
-                            return `<td class="px-2 py-1 border-b border-white/10 text-center">
-                                  <label class="custom-checkbox">
-                                    <input type="checkbox" data-player-id="${
-                                      ev.id
-                                    }" data-goal-index="${i}" class="goal-checkbox" ${
-                              scorerId && scorerId == ev.id ? "checked" : ""
-                            }>
-                                    <span></span>
-                                  </label>
-                                </td>`;
-                          }).join("")}
-                          <td class="px-2 py-1 border-b border-white/10 text-center">
-                            <label class="custom-checkbox blue-checkbox">
-                              <input type="checkbox" data-player-id="${
-                                ev.id
-                              }" data-card-type="blue" class="card-checkbox" ${
-                            ev.blue ? "checked" : ""
-                          }>
-                              <span></span>
-                            </label>
-                          </td>
-                          <td class="px-2 py-1 border-b border-white/10 text-center">
-                            <label class="custom-checkbox yellow-checkbox">
-                              <input type="checkbox" data-player-id="${
-                                ev.id
-                              }" data-card-type="yellow" class="card-checkbox" ${
-                            ev.yellow ? "checked" : ""
-                          }>
-                              <span></span>
-                            </label>
-                          </td>
-                          <td class="px-2 py-1 border-b border-white/10 text-center">
-                            <label class="custom-checkbox red-checkbox">
-                              <input type="checkbox" data-player-id="${
-                                ev.id
-                              }" data-card-type="red" class="card-checkbox" ${
-                            ev.red ? "checked" : ""
-                          }>
-                              <span></span>
-                            </label>
-                          </td>
-                        </tr>
-                      `
-                        )
-                        .join("")}
-                    </tbody>
-                  </table>
-                </div>
-            `;
-            $container.html(table);
-
-            // Add event listeners for goal checkboxes
-            $container.find(".goal-checkbox").on("change", function () {
-              const playerId = $(this).data("player-id");
-              const goalIndex = $(this).data("goal-index");
-              const isChecked = $(this).prop("checked");
-
-              let teamGoals = $container
-                .closest(".team-scoring-card")
-                .data("teamGoals");
-
-              if (isChecked) {
-                // Add goal at specific index
-                teamGoals[goalIndex] = playerId;
-              } else {
-                // Remove goal at specific index
-                teamGoals[goalIndex] = undefined;
-              }
-
-              // Update team goals data
-              $container
-                .closest(".team-scoring-card")
-                .data("teamGoals", teamGoals);
-
-              // Re-render table to reflect changes
-              const playerEvents = $container
-                .closest(".team-scoring-card")
-                .data("playerEvents");
-              renderPlayerEventsTable($container, playerEvents, teamGoals);
-            });
-
-            // Add event listeners for card checkboxes
-            $container.find(".card-checkbox").on("change", function () {
-              const playerId = $(this).data("player-id");
-              const cardType = $(this).data("card-type");
-              const isChecked = $(this).prop("checked");
-
-              let playerEvents = $container
-                .closest(".team-scoring-card")
-                .data("playerEvents");
-              let player = playerEvents.find((ev) => ev.id == playerId);
-
-              if (player) {
-                player[cardType] = isChecked;
-
-                // Update player events data
-                $container
-                  .closest(".team-scoring-card")
-                  .data("playerEvents", playerEvents);
-              }
-            });
-          }
+          // use global renderPlayerEventsTable
 
           const mainHtml = `
             <div class="space-y-8">
@@ -945,10 +1730,26 @@
 
           $("#admin-start-match-root").html(mainHtml);
 
-          $(".team-scoring-card").each(function () {
+          $(".team-scoring-card").each(function (idx) {
             const $card = $(this);
-            $card.data("playerEvents", []);
+            // Pre-populate events with all present players so table shows everyone
+            const members = idx === 0 ? (team1.members || []) : (team2.members || []);
+            const initialEvents = members.map(m => ({
+              id: m.id,
+              blue: false,
+              yellow: false,
+              red: false,
+              blue_reason_code: '',
+              blue_reason_text: '',
+              yellow_reason_code: '',
+              yellow_reason_text: '',
+              red_reason_code: '',
+              red_reason_text: ''
+            }));
+            $card.data("playerEvents", initialEvents);
             $card.data("teamGoals", []);
+            // Attach team members for name lookups
+            $card.data('teamMembers', idx === 0 ? (team1.members || []) : (team2.members || []));
             const $tableContainer = $card.find(".events-table-container");
 
             renderPlayerEventsTable(
@@ -985,13 +1786,19 @@
 
               let playerEvents = $card.data("playerEvents");
               let teamGoals = $card.data("teamGoals");
-              let player = playerEvents.find((ev) => ev.id == playerId); // Use == for loose comparison
+        let player = playerEvents.find((ev) => ev.id == playerId); // Use == for loose comparison
               if (!player) {
                 player = {
                   id: playerId,
                   blue: false,
                   yellow: false,
                   red: false,
+          blue_reason_code: '',
+          blue_reason_text: '',
+          yellow_reason_code: '',
+          yellow_reason_text: '',
+          red_reason_code: '',
+          red_reason_text: '',
                 };
                 playerEvents.push(player);
               }
@@ -1034,6 +1841,12 @@
                 blue: !!ev.blue,
                 yellow: !!ev.yellow,
                 red: !!ev.red,
+                blue_reason_code: ev.blue ? (ev.blue_reason_code || '') : '',
+                blue_reason_text: ev.blue ? (ev.blue_reason_text || '') : '',
+                yellow_reason_code: ev.yellow ? (ev.yellow_reason_code || '') : '',
+                yellow_reason_text: ev.yellow ? (ev.yellow_reason_text || '') : '',
+                red_reason_code: ev.red ? (ev.red_reason_code || '') : '',
+                red_reason_text: ev.red ? (ev.red_reason_text || '') : ''
               }));
               return { id: teamId, goals, cards: cardsArr };
             }

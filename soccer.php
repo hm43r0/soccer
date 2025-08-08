@@ -1174,6 +1174,39 @@ add_action('wp_ajax_save_soccer_match_summary', function () {
     wp_send_json_success();
 });
 
+// AJAX: Get existing match summary (final score, fouls, notes, score_data)
+add_action('wp_ajax_your_plugin_get_match_summary', 'your_plugin_get_match_summary_handler');
+add_action('wp_ajax_nopriv_your_plugin_get_match_summary', 'your_plugin_get_match_summary_handler');
+function your_plugin_get_match_summary_handler()
+{
+    if (! check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false)) {
+        wp_send_json_error(array('message' => __('Security check failed.', YOUR_PLUGIN_SLUG)));
+        return;
+    }
+
+    $match_id = isset($_POST['match_id']) ? intval($_POST['match_id']) : 0;
+    if (! $match_id) {
+        wp_send_json_error(array('message' => 'Invalid match ID.'));
+        return;
+    }
+
+    $final_score = get_post_meta($match_id, 'final_score', true);
+    $caution_desc = get_post_meta($match_id, 'caution_desc', true);
+    $additional_notes = get_post_meta($match_id, 'additional_notes', true);
+    $first_half_fouls = get_post_meta($match_id, 'first_half_fouls', true);
+    $second_half_fouls = get_post_meta($match_id, 'second_half_fouls', true);
+    $score_data = get_post_meta($match_id, 'score_data', true);
+
+    wp_send_json_success(array(
+        'final_score' => $final_score ? $final_score : '',
+        'caution_desc' => $caution_desc ? $caution_desc : '',
+        'additional_notes' => $additional_notes ? $additional_notes : '',
+        'first_half_fouls' => $first_half_fouls ? $first_half_fouls : '',
+        'second_half_fouls' => $second_half_fouls ? $second_half_fouls : '',
+        'score_data' => $score_data ? $score_data : ''
+    ));
+}
+
 // --- AJAX Handler for Deleting a Match ---
 add_action('wp_ajax_your_plugin_delete_match', 'your_plugin_handle_delete_match');
 add_action('wp_ajax_nopriv_your_plugin_delete_match', 'your_plugin_handle_delete_match');
