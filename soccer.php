@@ -516,6 +516,14 @@ function your_plugin_handle_create_team()
     // Get team name and sanitize it
     $team_name = isset($_POST['team_name']) ? sanitize_text_field($_POST['team_name']) : '';
 
+    // Get classification fields
+    $team_location = isset($_POST['team_location']) ? sanitize_text_field($_POST['team_location']) : '';
+    $team_day = isset($_POST['team_day']) ? sanitize_text_field($_POST['team_day']) : '';
+    $team_league = isset($_POST['team_league']) ? sanitize_text_field($_POST['team_league']) : '';
+    $team_division = isset($_POST['team_division']) ? sanitize_text_field($_POST['team_division']) : '';
+    $team_season = isset($_POST['team_season']) ? sanitize_text_field($_POST['team_season']) : '';
+    $team_year = isset($_POST['team_year']) ? sanitize_text_field($_POST['team_year']) : '';
+
     // Get players data as a string. It should be a JSON string from the JS.
     $players_input_string = isset($_POST['players']) ? $_POST['players'] : '[]';
 
@@ -614,6 +622,14 @@ function your_plugin_handle_create_team()
         update_post_meta($post_id, 'team_players', json_encode($valid_players));
         update_post_meta($post_id, 'team_jersey_image_id', $attach_id);
 
+        // Save classification fields as post meta
+        update_post_meta($post_id, 'team_location', $team_location);
+        update_post_meta($post_id, 'team_day', $team_day);
+        update_post_meta($post_id, 'team_league', $team_league);
+        update_post_meta($post_id, 'team_division', $team_division);
+        update_post_meta($post_id, 'team_season', $team_season);
+        update_post_meta($post_id, 'team_year', $team_year);
+
 
         // --- Send Success Response ---
         wp_send_json_success(array(
@@ -621,7 +637,13 @@ function your_plugin_handle_create_team()
             'team_id' => $post_id, // The ID of the newly created CPT post
             'team_name' => $team_name,
             'players' => $valid_players, // Send back the validated players for JS to potentially use
-            'jersey_image_url' => wp_get_attachment_url($attach_id)
+            'jersey_image_url' => wp_get_attachment_url($attach_id),
+            'team_location' => $team_location,
+            'team_day' => $team_day,
+            'team_league' => $team_league,
+            'team_division' => $team_division,
+            'team_season' => $team_season,
+            'team_year' => $team_year,
         ));
     }
 }
@@ -734,11 +756,25 @@ function your_plugin_fetch_teams_handler()
             $jersey_image_id = get_post_meta($post_id, 'team_jersey_image_id', true);
             $jersey_image_url = $jersey_image_id ? wp_get_attachment_url($jersey_image_id) : '';
 
+            // Classification fields
+            $team_location = get_post_meta($post_id, 'team_location', true);
+            $team_day = get_post_meta($post_id, 'team_day', true);
+            $team_league = get_post_meta($post_id, 'team_league', true);
+            $team_division = get_post_meta($post_id, 'team_division', true);
+            $team_season = get_post_meta($post_id, 'team_season', true);
+            $team_year = get_post_meta($post_id, 'team_year', true);
+
             $teams_data[] = array(
                 'id'      => $post_id,
                 'name'    => $team_name,
                 'members' => $players, // Include members in the data sent to JS
-                'jersey_image_url' => $jersey_image_url
+                'jersey_image_url' => $jersey_image_url,
+                'team_location' => $team_location ? $team_location : '',
+                'team_day' => $team_day ? $team_day : '',
+                'team_league' => $team_league ? $team_league : '',
+                'team_division' => $team_division ? $team_division : '',
+                'team_season' => $team_season ? $team_season : '',
+                'team_year' => $team_year ? $team_year : '',
             );
         }
         wp_reset_postdata();
@@ -759,6 +795,13 @@ function your_plugin_handle_update_team()
     }
     $team_id = isset($_POST['team_id']) ? intval($_POST['team_id']) : 0;
     $team_name = isset($_POST['team_name']) ? sanitize_text_field($_POST['team_name']) : '';
+    // Classification fields
+    $team_location = isset($_POST['team_location']) ? sanitize_text_field($_POST['team_location']) : '';
+    $team_day = isset($_POST['team_day']) ? sanitize_text_field($_POST['team_day']) : '';
+    $team_league = isset($_POST['team_league']) ? sanitize_text_field($_POST['team_league']) : '';
+    $team_division = isset($_POST['team_division']) ? sanitize_text_field($_POST['team_division']) : '';
+    $team_season = isset($_POST['team_season']) ? sanitize_text_field($_POST['team_season']) : '';
+    $team_year = isset($_POST['team_year']) ? sanitize_text_field($_POST['team_year']) : '';
     $players_input_string = isset($_POST['players']) ? $_POST['players'] : '[]';
 
     $attach_id = null;
@@ -847,6 +890,14 @@ function your_plugin_handle_update_team()
             update_post_meta($team_id, 'team_jersey_image_id', $attach_id);
         }
 
+        // Update classification fields
+        update_post_meta($team_id, 'team_location', $team_location);
+        update_post_meta($team_id, 'team_day', $team_day);
+        update_post_meta($team_id, 'team_league', $team_league);
+        update_post_meta($team_id, 'team_division', $team_division);
+        update_post_meta($team_id, 'team_season', $team_season);
+        update_post_meta($team_id, 'team_year', $team_year);
+
         $jersey_image_id = get_post_meta($team_id, 'team_jersey_image_id', true);
         $jersey_image_url = $jersey_image_id ? wp_get_attachment_url($jersey_image_id) : '';
 
@@ -855,7 +906,13 @@ function your_plugin_handle_update_team()
             'team_id' => $team_id,
             'team_name' => $team_name,
             'players' => $valid_players,
-            'jersey_image_url' => $jersey_image_url
+            'jersey_image_url' => $jersey_image_url,
+            'team_location' => $team_location,
+            'team_day' => $team_day,
+            'team_league' => $team_league,
+            'team_division' => $team_division,
+            'team_season' => $team_season,
+            'team_year' => $team_year,
         ));
     }
 }
@@ -1055,6 +1112,12 @@ function your_plugin_fetch_matches_handler()
             $match_location = get_post_meta($post_id, '_match_location', true);
             $match_week = get_post_meta($post_id, '_match_week', true);
             $is_completed = get_post_meta($post_id, 'is_completed', true);
+            $score_data = get_post_meta($post_id, 'score_data', true);
+            $final_score = get_post_meta($post_id, 'final_score', true);
+            $caution_desc = get_post_meta($post_id, 'caution_desc', true);
+            $additional_notes = get_post_meta($post_id, 'additional_notes', true);
+            $first_half_fouls = get_post_meta($post_id, 'first_half_fouls', true);
+            $second_half_fouls = get_post_meta($post_id, 'second_half_fouls', true);
             
             // Get referee's first and last name
             $referee_name = '';
@@ -1077,10 +1140,17 @@ function your_plugin_fetch_matches_handler()
                 'team1Id' => $team1_id,
                 'team2Id' => $team2_id,
                 'referee' => $referee_name,
+                'refereeId' => $referee_id ? intval($referee_id) : 0,
                 'date' => $match_date,
                 'location' => $match_location,
                 'week' => $match_week,
-                'is_completed' => $is_completed
+                'is_completed' => $is_completed,
+                'score_data' => $score_data,
+                'final_score' => $final_score,
+                'caution_desc' => $caution_desc,
+                'additional_notes' => $additional_notes,
+                'first_half_fouls' => $first_half_fouls,
+                'second_half_fouls' => $second_half_fouls
             );
         }
         wp_reset_postdata();

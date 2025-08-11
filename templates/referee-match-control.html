@@ -1551,7 +1551,23 @@
                   const $card = $cards.eq(cardIdx);
                   let playerEvents = $card.data('playerEvents') || [];
                   let teamGoals = [];
-                  (teamObj.goals || []).forEach(g => { teamGoals[g.goalIndex - 1] = g.playerId; });
+                  // Robustly handle goals array which may contain nulls or be an array of ids
+                  const rawGoals = Array.isArray(teamObj.goals) ? teamObj.goals : [];
+                  if (rawGoals.length && typeof rawGoals[0] === 'object') {
+                    rawGoals.forEach(g => {
+                      if (g && g.goalIndex != null && g.playerId != null) {
+                        const idx = parseInt(g.goalIndex, 10);
+                        if (!isNaN(idx) && idx > 0) {
+                          teamGoals[idx - 1] = g.playerId;
+                        }
+                      }
+                    });
+                  } else {
+                    // Treat as array of playerIds possibly with holes/nulls
+                    rawGoals.forEach((pid, idx) => {
+                      if (pid != null && pid !== '') teamGoals[idx] = pid;
+                    });
+                  }
                   (teamObj.cards || []).forEach(c => {
                     let p = playerEvents.find(ev => ev.id == c.playerId);
                     if (!p) {
