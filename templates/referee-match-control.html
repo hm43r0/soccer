@@ -941,8 +941,96 @@
             success: function (resp) {
               // Build team members as in start flow
               fetchTeamMembers(match.team1Id, match.team2Id, function (team1Data, team2Data) {
-                const team1 = { name: team1Data.name || match.team1Name || 'Unknown Team', members: team1Data.members || [], jersey_image_url: team1Data.jersey_image_url || null };
-                const team2 = { name: team2Data.name || match.team2Name || 'Unknown Team', members: team2Data.members || [], jersey_image_url: team2Data.jersey_image_url || null };
+                
+                console.log('Original team1Data:', team1Data);
+                console.log('Original team2Data:', team2Data);
+                
+                // Filter team members based on attendance data if available
+                let filteredTeam1Members = team1Data.members || [];
+                let filteredTeam2Members = team2Data.members || [];
+                
+                if (resp && resp.success && resp.data && resp.data.score_data) {
+                  try {
+                    const scoreData = typeof resp.data.score_data === 'string' 
+                      ? JSON.parse(resp.data.score_data) 
+                      : resp.data.score_data;
+                    
+                    console.log('Score data for editing:', scoreData);
+                    
+                    // Filter team1 members based on attendance
+                    if (scoreData.team1 && scoreData.team1.attendance && scoreData.team1.attendance.length > 0) {
+                      const attendance = scoreData.team1.attendance;
+                      console.log('Team1 raw attendance data:', attendance);
+                      
+                      // Handle both formats: array of IDs or array of player objects
+                      let team1AttendanceIds = [];
+                      if (attendance.length > 0) {
+                        if (typeof attendance[0] === 'object' && attendance[0].id !== undefined) {
+                          // Format: [{id: "123", name: "Player Name"}, ...]
+                          team1AttendanceIds = attendance.map(player => String(player.id));
+                          console.log('Team1 - Attendance stored as objects, extracted IDs:', team1AttendanceIds);
+                        } else {
+                          // Format: ["123", "456", ...]
+                          team1AttendanceIds = attendance.map(id => String(id));
+                          console.log('Team1 - Attendance stored as IDs:', team1AttendanceIds);
+                        }
+                      }
+                      
+                      filteredTeam1Members = team1Data.members.filter(member => {
+                        const memberMatches = team1AttendanceIds.includes(String(member.id));
+                        if (memberMatches) {
+                          console.log(`Team1 - Found present player: ID=${member.id}, Name=${member.name}`);
+                        }
+                        return memberMatches;
+                      });
+                      console.log(`Filtered team1 from ${team1Data.members.length} to ${filteredTeam1Members.length} present players`);
+                      console.log('Team1 filtered members:', filteredTeam1Members);
+                    }
+                    
+                    // Filter team2 members based on attendance
+                    if (scoreData.team2 && scoreData.team2.attendance && scoreData.team2.attendance.length > 0) {
+                      const attendance = scoreData.team2.attendance;
+                      console.log('Team2 raw attendance data:', attendance);
+                      
+                      // Handle both formats: array of IDs or array of player objects
+                      let team2AttendanceIds = [];
+                      if (attendance.length > 0) {
+                        if (typeof attendance[0] === 'object' && attendance[0].id !== undefined) {
+                          // Format: [{id: "123", name: "Player Name"}, ...]
+                          team2AttendanceIds = attendance.map(player => String(player.id));
+                          console.log('Team2 - Attendance stored as objects, extracted IDs:', team2AttendanceIds);
+                        } else {
+                          // Format: ["123", "456", ...]
+                          team2AttendanceIds = attendance.map(id => String(id));
+                          console.log('Team2 - Attendance stored as IDs:', team2AttendanceIds);
+                        }
+                      }
+                      
+                      filteredTeam2Members = team2Data.members.filter(member => {
+                        const memberMatches = team2AttendanceIds.includes(String(member.id));
+                        if (memberMatches) {
+                          console.log(`Team2 - Found present player: ID=${member.id}, Name=${member.name}`);
+                        }
+                        return memberMatches;
+                      });
+                      console.log(`Filtered team2 from ${team2Data.members.length} to ${filteredTeam2Members.length} present players`);
+                      console.log('Team2 filtered members:', filteredTeam2Members);
+                    }
+                  } catch (e) {
+                    console.warn('Could not parse score data for attendance filtering:', e);
+                  }
+                }
+                
+                const team1 = { 
+                  name: team1Data.name || match.team1Name || 'Unknown Team', 
+                  members: filteredTeam1Members, // Use filtered members
+                  jersey_image_url: team1Data.jersey_image_url || null 
+                };
+                const team2 = { 
+                  name: team2Data.name || match.team2Name || 'Unknown Team', 
+                  members: filteredTeam2Members, // Use filtered members
+                  jersey_image_url: team2Data.jersey_image_url || null 
+                };
 
                 // Render match UI inside popup root (re-using same renderer)
                 renderMatchInterfaceInto('#scoreEditRoot', match, team1, team2, resp && resp.success ? resp.data : null);
@@ -957,6 +1045,8 @@
         function closeScoreEditPopup() {
           $('#scoreEditPopup').removeClass('active');
           $('#scoreEditRoot').empty();
+          // Reset existing attendance data after editing
+          existingAttendanceData = { team1: [], team2: [] };
         }
         window.closeScoreEditPopup = closeScoreEditPopup;
 
@@ -966,9 +1056,19 @@
           team1: [],
           team2: []
         };
+        
+        // Store existing attendance data when editing matches
+        let existingAttendanceData = {
+          team1: [],
+          team2: []
+        };
 
         function showAttendancePopup(matchId) {
           currentMatchId = matchId;
+          
+          // Reset existing attendance data when starting a new match
+          existingAttendanceData = { team1: [], team2: [] };
+          
           const match = allMatches.find((m) => m.id == matchId);
           
           // Fetch team members for attendance
@@ -1545,6 +1645,16 @@
               const data = initialData;
               if (data.score_data) {
                 const parsed = typeof data.score_data === 'string' ? JSON.parse(data.score_data) : data.score_data;
+                
+                // Preserve existing attendance data for editing
+                if (parsed.team1 && parsed.team1.attendance) {
+                  existingAttendanceData.team1 = parsed.team1.attendance;
+                }
+                if (parsed.team2 && parsed.team2.attendance) {
+                  existingAttendanceData.team2 = parsed.team2.attendance;
+                }
+                console.log('Loaded existing attendance data for editing:', existingAttendanceData);
+                
                 // Apply goals/cards to UI state
                 const $cards = $container.find('.team-scoring-card');
                 function applyTeam(cardIdx, teamObj) {
@@ -1628,7 +1738,24 @@
                 red_reason_code: ev.red ? (ev.red_reason_code || '') : '',
                 red_reason_text: ev.red ? (ev.red_reason_text || '') : ''
               }));
-              return { id: teamId, goals, cards: cardsArr };
+              
+              // Add attendance data if available
+              let attendance = [];
+              if (attendanceData && attendanceData.team1 && attendanceData.team2) {
+                if (teamId == match.team1Id) {
+                  attendance = attendanceData.team1.map(player => player.id);
+                } else if (teamId == match.team2Id) {
+                  attendance = attendanceData.team2.map(player => player.id);
+                }
+                console.log(`[SAVE] Adding attendance for team ${teamId}:`, attendance);
+              }
+              
+              return { 
+                id: teamId, 
+                goals, 
+                cards: cardsArr, 
+                attendance: attendance // Add attendance to score data
+              };
             }
             const scoreData = JSON.stringify({
               team1: getTeamScoreData(team1Card, match.team1Id),
@@ -1874,7 +2001,45 @@
                 red_reason_code: ev.red ? (ev.red_reason_code || '') : '',
                 red_reason_text: ev.red ? (ev.red_reason_text || '') : ''
               }));
-              return { id: teamId, goals, cards: cardsArr };
+              
+              // Add attendance data if available (preserve existing when editing)
+              let attendance = [];
+              console.log(`[DEBUG] Processing team ${teamId}, existingAttendanceData:`, existingAttendanceData);
+              
+              if (existingAttendanceData && (existingAttendanceData.team1.length > 0 || existingAttendanceData.team2.length > 0)) {
+                // Use existing attendance data when editing - preserve it exactly
+                if (teamId == match.team1Id) {
+                  attendance = existingAttendanceData.team1;
+                } else if (teamId == match.team2Id) {
+                  attendance = existingAttendanceData.team2;
+                }
+                console.log(`[EDIT] Using existing attendance for team ${teamId}:`, attendance);
+              } else if (attendanceData && attendanceData.team1 && attendanceData.team2 && (attendanceData.team1.length > 0 || attendanceData.team2.length > 0)) {
+                // Use new attendance data from attendance popup (for new matches)
+                if (teamId == match.team1Id) {
+                  attendance = attendanceData.team1.map(player => player.id);
+                } else if (teamId == match.team2Id) {
+                  attendance = attendanceData.team2.map(player => player.id);
+                }
+                console.log(`[NEW] Using new attendance for team ${teamId}:`, attendance);
+              } else {
+                // For editing: Don't include attendance field at all if no data
+                // This prevents overwriting existing data with empty arrays
+                console.log(`[SKIP] No attendance data for team ${teamId} - skipping attendance field`);
+                return { 
+                  id: teamId, 
+                  goals, 
+                  cards: cardsArr
+                  // No attendance field - this prevents overwriting existing data
+                };
+              }
+              
+              return { 
+                id: teamId, 
+                goals, 
+                cards: cardsArr, 
+                attendance: attendance // Add attendance to score data
+              };
             }
 
             const scoreData = JSON.stringify({

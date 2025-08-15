@@ -965,6 +965,9 @@ register_deactivation_hook(__FILE__, 'your_plugin_remove_referee_role');
 // Include referee AJAX handler
 require_once plugin_dir_path(__FILE__) . 'inc/fetch-referees.php';
 
+// Include players AJAX handler
+require_once plugin_dir_path(__FILE__) . 'inc/fetch-players.php';
+
 // --- AJAX Handler for Fetching Referee Matches ---
 add_action('wp_ajax_your_plugin_fetch_referee_matches', 'your_plugin_fetch_referee_matches_handler');
 add_action('wp_ajax_nopriv_your_plugin_fetch_referee_matches', 'your_plugin_fetch_referee_matches_handler');
@@ -1228,6 +1231,28 @@ add_action('wp_ajax_save_soccer_match_summary', function () {
     update_post_meta($match_id, 'first_half_fouls', $first_half_fouls);
     update_post_meta($match_id, 'second_half_fouls', $second_half_fouls);
     if ($score_data) {
+        // Get existing score data to preserve attendance information
+        $existing_score_data = get_post_meta($match_id, 'score_data', true);
+        
+        if (!empty($existing_score_data)) {
+            // Merge new score data with existing attendance data
+            $existing_data = json_decode($existing_score_data, true);
+            $new_data = json_decode($score_data, true);
+            
+            if (is_array($existing_data) && is_array($new_data)) {
+                foreach (['team1', 'team2'] as $team_key) {
+                    if (isset($existing_data[$team_key]['attendance']) && 
+                        !empty($existing_data[$team_key]['attendance']) &&
+                        (!isset($new_data[$team_key]['attendance']) || empty($new_data[$team_key]['attendance']))) {
+                        // Preserve existing attendance data if new data doesn't have it
+                        $new_data[$team_key]['attendance'] = $existing_data[$team_key]['attendance'];
+                        error_log("Preserving attendance data for $team_key in match $match_id: " . json_encode($existing_data[$team_key]['attendance']));
+                    }
+                }
+                $score_data = json_encode($new_data);
+            }
+        }
+        
         update_post_meta($match_id, 'score_data', $score_data);
     }
     update_post_meta($match_id, 'is_completed', '1'); // Mark as completed
