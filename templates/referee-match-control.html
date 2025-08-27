@@ -737,6 +737,10 @@
 
       jQuery(document).ready(function ($) {
         let allMatches = []; // Store all match data including teams and players
+        let currentMatch = null; // Store current match data
+        let currentTeam1 = null; // Store current team1 data
+        let currentTeam2 = null; // Store current team2 data
+        let isViewingMode = false; // Flag to indicate if viewing/editing existing match
 
         function loadRefereeMatches() {
           // Reset attendance data when loading matches
@@ -792,6 +796,7 @@
         function renderRefereeMatchesList() {
           updateStatCards(allMatches);
           const today = new Date().toISOString().slice(0, 10);
+          const savedMatch = loadMatchFromLocalStorage();
 
           // Separate matches by status
           let todayMatches = [],
@@ -864,10 +869,14 @@
 
           // Today's matches
           todayMatches.forEach(function (match) {
+            let buttonHtml = `<button class="start-match-card-btn mt-4 w-full bg-gradient-to-r from-green-500 to-green-700 text-white py-2 px-4 rounded-lg font-semibold hover:from-green-600 hover:to-green-800 transition-all" data-match-id="${match.id}">Start Match</button>`;
+            if (savedMatch && savedMatch.matchId == match.id) {
+              buttonHtml = `<button class="continue-match-card-btn mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white py-2 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-800 transition-all" data-match-id="${match.id}">Continue Match</button>`;
+            }
             html += matchCard(
               match,
               '<span class="inline-block px-3 py-1 rounded-full bg-green-600 text-white text-xs font-semibold">Today</span>',
-              `<button class="start-match-card-btn mt-4 w-full bg-gradient-to-r from-green-500 to-green-700 text-white py-2 px-4 rounded-lg font-semibold hover:from-green-600 hover:to-green-800 transition-all" data-match-id="${match.id}">Start Match</button>`
+              buttonHtml
             );
           });
 
@@ -882,10 +891,14 @@
 
           // Past, incomplete matches
           pastIncompleteMatches.forEach(function (match) {
+            let buttonHtml = `<button class="start-match-card-btn mt-4 w-full bg-gradient-to-r from-yellow-500 to-yellow-700 text-white py-2 px-4 rounded-lg font-semibold hover:from-yellow-600 hover:to-yellow-800 transition-all" data-match-id="${match.id}">Enter Score</button>`;
+            if (savedMatch && savedMatch.matchId == match.id) {
+              buttonHtml = `<button class="continue-match-card-btn mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white py-2 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-800 transition-all" data-match-id="${match.id}">Continue Match</button>`;
+            }
             html += matchCard(
               match,
               '<span class="inline-block px-3 py-1 rounded-full bg-red-600 text-white text-xs font-semibold">Past Due</span>',
-              `<button class="start-match-card-btn mt-4 w-full bg-gradient-to-r from-yellow-500 to-yellow-700 text-white py-2 px-4 rounded-lg font-semibold hover:from-yellow-600 hover:to-yellow-800 transition-all" data-match-id="${match.id}">Enter Score</button>`
+              buttonHtml
             );
           });
 
@@ -916,6 +929,29 @@
           
           // Show attendance popup instead of directly starting match
           showAttendancePopup(matchId);
+        });
+
+        // Continue match button click
+        $(document).on("click", ".continue-match-card-btn", function () {
+          const matchId = $(this).data("match-id");
+          const savedMatch = loadMatchFromLocalStorage();
+
+          if (savedMatch && savedMatch.matchId == matchId) {
+            // Restore attendance data from localStorage
+            if (savedMatch.attendanceData) {
+              attendanceData = savedMatch.attendanceData;
+            }
+            
+            // Hide dashboard and show match interface
+            $("#referee-matches-list, #referee-stat-cards").addClass("hidden");
+            $("#admin-start-match-root").removeClass("hidden");
+            
+            // Render the match interface with saved data
+            renderAdminStartMatch(matchId);
+          } else {
+            // If for some reason there's no saved data, treat as a normal start
+            showAttendancePopup(matchId);
+          }
         });
 
         // Open score edit popup for completed match
@@ -1050,12 +1086,14 @@
         }
         window.closeScoreEditPopup = closeScoreEditPopup;
 
-        // Global variables for attendance
+        // Global variables for attendance and half control
         let currentMatchId = null;
         let attendanceData = {
           team1: [],
           team2: []
         };
+        // currentHalf can be 'first' or 'second'
+        let currentHalf = 'first';
         
         // Store existing attendance data when editing matches
         let existingAttendanceData = {
@@ -1391,7 +1429,20 @@
 
           // Helper to count goals for a player
           function countGoalsFor(playerId) {
-            return (teamGoals || []).filter(pid => pid == playerId).length;
+            let goals = 0;
+            const playerEvents = $container.closest('.team-scoring-card').data('playerEvents') || [];
+            const player = playerEvents.find(p => p.id == playerId);
+            if (player && player.goals) {
+              goals = player.goals.length;
+            }
+            return goals;
+          }
+
+          // Helper to check if a player has scored at a specific goal index
+          function hasGoalAtIndex(playerId, goalIndex) {
+            const playerEvents = $container.closest('.team-scoring-card').data('playerEvents') || [];
+            const player = playerEvents.find(p => p.id == playerId);
+            return player && Array.isArray(player.goals) && player.goals.includes(goalIndex + 1);
           }
 
           // Predefine standard reasons per card type
@@ -1453,13 +1504,12 @@
                         }</td>
                         <td class="px-2 py-1 border-b border-white/10 text-center">${countGoalsFor(ev.id)}</td>
                         ${Array.from({ length: goalColumnCount }, (_, i) => {
-                          const scorerId = (teamGoals || [])[i];
                           return `<td class="px-2 py-1 border-b border-white/10 text-center">
                                 <label class="custom-checkbox">
                                   <input type="checkbox" data-player-id="${
                                     ev.id
                                   }" data-goal-index="${i}" class="goal-checkbox" ${
-                            scorerId && scorerId == ev.id ? "checked" : ""
+                            hasGoalAtIndex(ev.id, i) ? "checked" : ""
                           }>
                                   <span></span>
                                 </label>
@@ -1520,28 +1570,62 @@
             const goalIndex = $(this).data("goal-index");
             const isChecked = $(this).prop("checked");
 
-            let teamGoalsLocal = $container
-              .closest(".team-scoring-card")
-              .data("teamGoals") || [];
-
-            if (isChecked) {
-              // Add goal at specific index
-              teamGoalsLocal[goalIndex] = playerId;
-            } else {
-              // Remove goal at specific index
-              teamGoalsLocal[goalIndex] = undefined;
-            }
-
-            // Update team goals data
-            $container
-              .closest(".team-scoring-card")
-              .data("teamGoals", teamGoalsLocal);
-
-            // Re-render table to reflect changes
-            const playerEventsLocal = $container
+            let playerEventsLocal = $container
               .closest(".team-scoring-card")
               .data("playerEvents") || [];
+
+            let player = playerEventsLocal.find(p => p.id == playerId);
+            if (!player) {
+              player = {
+                id: playerId,
+                blue: false,
+                yellow: false,
+                red: false,
+                goals: []
+              };
+              playerEventsLocal.push(player);
+            }
+
+            if (!player.goals) {
+              player.goals = [];
+            }
+
+            if (isChecked) {
+              // Add goal - store the column number + 1 as the goal index
+              if (!player.goals.includes(goalIndex + 1)) {
+                player.goals.push(goalIndex + 1);
+              }
+            } else {
+              // Remove goal
+              player.goals = player.goals.filter(g => g !== goalIndex + 1);
+            }
+
+            // Update player events data
+            $container
+              .closest(".team-scoring-card")
+              .data("playerEvents", playerEventsLocal);
+
+            // Update teamGoals data
+            let teamGoalsLocal = [];
+            playerEventsLocal.forEach(player => {
+              if (player.goals) {
+                player.goals.forEach(goalIndex => {
+                  teamGoalsLocal.push({ playerId: player.id, goalIndex: goalIndex });
+                });
+              }
+            });
+            $container.closest(".team-scoring-card").data("teamGoals", teamGoalsLocal);
+
+            // Calculate goals and fouls and update summary
+            updateMatchSummaryStats();
+
+            // Re-render table to reflect changes
             renderPlayerEventsTable($container, playerEventsLocal, teamGoalsLocal);
+
+            // Save to localStorage
+            if (!isViewingMode) {
+              saveMatchToLocalStorage();
+            }
           });
 
           // Add event listeners for card checkboxes
@@ -1583,6 +1667,12 @@
               reasonSelect.addClass('hidden');
               otherInput.addClass('hidden');
             }
+            
+            // Update stats and save to localStorage after card changes
+            updateMatchSummaryStats();
+            if (!isViewingMode) {
+              saveMatchToLocalStorage();
+            }
           });
 
           // Reason select changes
@@ -1607,6 +1697,10 @@
                 player[cardType + '_reason_text'] = label;
               }
               $container.closest('.team-scoring-card').data('playerEvents', playerEventsLocal);
+              // Save changes to localStorage
+              if (!isViewingMode) {
+                saveMatchToLocalStorage();
+              }
             }
           });
 
@@ -1625,7 +1719,16 @@
         }
 
         // Wrapper to render into an arbitrary container, with optional initialData (from saved meta)
-        function renderMatchInterfaceInto(containerSelector, match, team1, team2, initialData) {
+        function renderMatchInterfaceInto(containerSelector, matchData, team1Data, team2Data, initialData) {
+          // Store the data globally
+          currentMatch = matchData;
+          currentTeam1 = team1Data;
+          currentTeam2 = team2Data;
+
+          // Set viewing mode if initialData is provided
+          isViewingMode = !!initialData;
+          currentHalf = 'first'; // Initialize currentHalf for viewing
+
           // Render as usual, but place generated HTML into the given container
           const $container = $(containerSelector);
           // We temporarily override #admin-start-match-root target by injecting HTML into this container
@@ -1634,17 +1737,133 @@
           const tempRoot = $('<div></div>');
           originalRoot.append(tempRoot);
           // Call existing renderer which writes into #admin-start-match-root
-          renderMatchInterface(match, team1, team2);
+          renderMatchInterface(matchData, team1Data, team2Data);
           // Move produced content into our target container
           $container.html(originalRoot.children().detach());
 
+          // Override half selector for viewing mode
+          $container.find('#halfSelector').off('change').on('change', function() {
+            const selected = $(this).val();
+            if (!selected) return;
+            currentHalf = selected;
+            const data = window.viewingScoreData;
+            if (data) {
+              if (selected === 'first') {
+                $container.find('input[name="first_half_fouls"]').val(data.first_half_fouls);
+                $container.find('input[name="second_half_fouls"]').val(data.second_half_fouls);
+                $container.find('label:contains("1st Half Fouls")').text('1st Half Fouls');
+                $container.find('label:contains("2nd Half Fouls")').text('2nd Half Fouls');
+              } else {
+                $container.find('input[name="first_half_fouls"]').val(data.second_half_fouls);
+                $container.find('input[name="second_half_fouls"]').val(data.first_half_fouls);
+                $container.find('label:contains("1st Half Fouls")').text('2nd Half Fouls');
+                $container.find('label:contains("2nd Half Fouls")').text('1st Half Fouls');
+              }
+              $container.find('textarea[name="caution_desc"]').val(data.caution_desc);
+              $container.find('textarea[name="additional_notes"]').val(data.additional_notes);
+            }
+            // Update player tables for the selected half
+            const $cards = $container.find('.team-scoring-card');
+            function applyHalfToCard(idx) {
+              const $card = $cards.eq(idx);
+              const parsedData = window.viewingParsedData;
+              if (parsedData && parsedData.team1 && parsedData.team2) {
+                const teamObj = idx === 0 ? parsedData.team1 : parsedData.team2;
+                applyTeam(idx, teamObj);
+              }
+            }
+            applyHalfToCard(0);
+            applyHalfToCard(1);
+          });
+
           // Prefill with initialData if provided
+          let parsed = null;
+          
+          // Define applyTeam function outside try block for accessibility
+          function applyTeam(cardIdx, teamObj) {
+            const $card = $container.find('.team-scoring-card').eq(cardIdx);
+            let playerEvents = $card.data('playerEvents') || [];
+            
+            // Initialize all players: clear goals and reset card flags/reason fields
+            playerEvents.forEach(player => {
+              player.goals = [];
+              player.blue = false;
+              player.yellow = false;
+              player.red = false;
+              player.blue_reason_code = '';
+              player.blue_reason_text = '';
+              player.yellow_reason_code = '';
+              player.yellow_reason_text = '';
+              player.red_reason_code = '';
+              player.red_reason_text = '';
+            });
+
+            // Handle goals array
+            const rawGoals = Array.isArray(teamObj.goals) ? teamObj.goals : [];
+            if (rawGoals.length && typeof rawGoals[0] === 'object') {
+              rawGoals.forEach(g => {
+                if (g && g.goalIndex != null && g.playerId != null) {
+                  // For viewing mode, filter by currentHalf
+                  if (isViewingMode && g.half && g.half !== currentHalf) {
+                    return; // Skip goals not in current half
+                  }
+                  const idx = parseInt(g.goalIndex, 10);
+                  if (!isNaN(idx) && idx > 0) {
+                    // Find the player and add the goal
+                    let player = playerEvents.find(p => p.id == g.playerId);
+                    if (player) {
+                      if (!player.goals) player.goals = [];
+                      player.goals.push(idx);
+                    }
+                  }
+                }
+              });
+            }
+            (teamObj.cards || []).forEach(c => {
+              // When viewing saved data, cards may include a `half` field.
+              // Only apply cards that belong to the currently selected half.
+              if (isViewingMode && c && c.half && c.half !== currentHalf) {
+                return; // skip cards from other half
+              }
+              let p = playerEvents.find(ev => ev.id == c.playerId);
+              if (!p) {
+                p = { id: c.playerId, blue:false,yellow:false,red:false, blue_reason_code:'',blue_reason_text:'',yellow_reason_code:'',yellow_reason_text:'',red_reason_code:'',red_reason_text:'' };
+                playerEvents.push(p);
+              }
+              p.blue = !!c.blue; p.yellow = !!c.yellow; p.red = !!c.red;
+              p.blue_reason_code = c.blue_reason_code || ''; p.blue_reason_text = c.blue_reason_text || '';
+              p.yellow_reason_code = c.yellow_reason_code || ''; p.yellow_reason_text = c.yellow_reason_text || '';
+              p.red_reason_code = c.red_reason_code || ''; p.red_reason_text = c.red_reason_text || '';
+            });
+            $card.data('playerEvents', playerEvents);
+            // Filter teamGoals for viewing mode
+            let filteredGoals = teamObj.goals || [];
+            if (isViewingMode) {
+              filteredGoals = rawGoals.filter(g => g && g.half === currentHalf);
+            }
+            $card.data('teamGoals', filteredGoals);
+            const $tableContainer = $card.find('.events-table-container');
+            renderPlayerEventsTable($tableContainer, playerEvents, filteredGoals);
+          }
+          
           if (initialData) {
             try {
               // initialData is expected to include score_data JSON string and other fields
               const data = initialData;
               if (data.score_data) {
-                const parsed = typeof data.score_data === 'string' ? JSON.parse(data.score_data) : data.score_data;
+                parsed = typeof data.score_data === 'string' ? JSON.parse(data.score_data) : data.score_data;
+                  // Normalize existing card entries: ensure each card has a `half` property.
+                  // Older saved payloads may not include `half`. Default to 'first' for compatibility.
+                  try {
+                    if (parsed.team1 && Array.isArray(parsed.team1.cards)) {
+                      parsed.team1.cards.forEach(c => { if (c && !c.half) c.half = 'first'; });
+                    }
+                    if (parsed.team2 && Array.isArray(parsed.team2.cards)) {
+                      parsed.team2.cards.forEach(c => { if (c && !c.half) c.half = 'first'; });
+                    }
+                  } catch(e) {
+                    console.warn('Failed to normalize card halves', e);
+                  }
                 
                 // Preserve existing attendance data for editing
                 if (parsed.team1 && parsed.team1.attendance) {
@@ -1657,45 +1876,23 @@
                 
                 // Apply goals/cards to UI state
                 const $cards = $container.find('.team-scoring-card');
-                function applyTeam(cardIdx, teamObj) {
-                  const $card = $cards.eq(cardIdx);
-                  let playerEvents = $card.data('playerEvents') || [];
-                  let teamGoals = [];
-                  // Robustly handle goals array which may contain nulls or be an array of ids
-                  const rawGoals = Array.isArray(teamObj.goals) ? teamObj.goals : [];
-                  if (rawGoals.length && typeof rawGoals[0] === 'object') {
-                    rawGoals.forEach(g => {
-                      if (g && g.goalIndex != null && g.playerId != null) {
-                        const idx = parseInt(g.goalIndex, 10);
-                        if (!isNaN(idx) && idx > 0) {
-                          teamGoals[idx - 1] = g.playerId;
-                        }
-                      }
-                    });
-                  } else {
-                    // Treat as array of playerIds possibly with holes/nulls
-                    rawGoals.forEach((pid, idx) => {
-                      if (pid != null && pid !== '') teamGoals[idx] = pid;
-                    });
-                  }
-                  (teamObj.cards || []).forEach(c => {
-                    let p = playerEvents.find(ev => ev.id == c.playerId);
-                    if (!p) {
-                      p = { id: c.playerId, blue:false,yellow:false,red:false, blue_reason_code:'',blue_reason_text:'',yellow_reason_code:'',yellow_reason_text:'',red_reason_code:'',red_reason_text:'' };
-                      playerEvents.push(p);
-                    }
-                    p.blue = !!c.blue; p.yellow = !!c.yellow; p.red = !!c.red;
-                    p.blue_reason_code = c.blue_reason_code || ''; p.blue_reason_text = c.blue_reason_text || '';
-                    p.yellow_reason_code = c.yellow_reason_code || ''; p.yellow_reason_text = c.yellow_reason_text || '';
-                    p.red_reason_code = c.red_reason_code || ''; p.red_reason_text = c.red_reason_text || '';
-                  });
-                  $card.data('playerEvents', playerEvents);
-                  $card.data('teamGoals', teamGoals);
-                  const $tableContainer = $card.find('.events-table-container');
-                  renderPlayerEventsTable($tableContainer, playerEvents, teamGoals);
-                }
                 if (parsed.team1) applyTeam(0, parsed.team1);
                 if (parsed.team2) applyTeam(1, parsed.team2);
+                
+                // Calculate total final score from all goals
+                let totalTeam1Goals = 0;
+                let totalTeam2Goals = 0;
+                if (parsed && parsed.team1 && parsed.team1.goals) {
+                  parsed.team1.goals.forEach(g => {
+                    if (g && g.playerId) totalTeam1Goals++;
+                  });
+                }
+                if (parsed && parsed.team2 && parsed.team2.goals) {
+                  parsed.team2.goals.forEach(g => {
+                    if (g && g.playerId) totalTeam2Goals++;
+                  });
+                }
+                $container.find('input[name="final_score"]').val(`${totalTeam1Goals}-${totalTeam2Goals}`);
               }
               // Prefill summary fields
               if (data.final_score) $container.find('input[name="final_score"]').val(data.final_score);
@@ -1703,6 +1900,10 @@
               if (data.second_half_fouls) $container.find('input[name="second_half_fouls"]').val(data.second_half_fouls);
               if (data.caution_desc) $container.find('textarea[name="caution_desc"]').val(data.caution_desc);
               if (data.additional_notes) $container.find('textarea[name="additional_notes"]').val(data.additional_notes);
+
+              // Store score data for viewing mode half switching
+              window.viewingScoreData = data;
+              window.viewingParsedData = parsed;
             } catch(e) {
               console.warn('Failed to prefill score data', e);
             }
@@ -1725,7 +1926,16 @@
             const team1Card = $cards.eq(0);
             const team2Card = $cards.eq(1);
             function getTeamScoreData($card, teamId) {
-              const goals = ($card.data('teamGoals') || []).map((pid, idx) => ({ playerId: pid, goalIndex: idx + 1 }));
+              const playerEvents = $card.data('playerEvents') || [];
+              const goals = [];
+              playerEvents.forEach(player => {
+                if (player.goals) {
+                  player.goals.forEach(goalIndex => {
+                    // tag goal with the half it belongs to (currentHalf in this popup)
+                    goals.push({ playerId: player.id, goalIndex: goalIndex, half: currentHalf });
+                  });
+                }
+              });
               const cardsArr = ($card.data('playerEvents') || []).map((ev) => ({
                 playerId: ev.id,
                 blue: !!ev.blue,
@@ -1736,15 +1946,17 @@
                 yellow_reason_code: ev.yellow ? (ev.yellow_reason_code || '') : '',
                 yellow_reason_text: ev.yellow ? (ev.yellow_reason_text || '') : '',
                 red_reason_code: ev.red ? (ev.red_reason_code || '') : '',
-                red_reason_text: ev.red ? (ev.red_reason_text || '') : ''
+                red_reason_text: ev.red ? (ev.red_reason_text || '') : '',
+                half: currentHalf
               }));
               
               // Add attendance data if available
               let attendance = [];
               if (attendanceData && attendanceData.team1 && attendanceData.team2) {
-                if (teamId == match.team1Id) {
+                // use currentMatch (set in this renderer) instead of undefined `match`
+                if (teamId == currentMatch.team1Id) {
                   attendance = attendanceData.team1.map(player => player.id);
-                } else if (teamId == match.team2Id) {
+                } else if (teamId == currentMatch.team2Id) {
                   attendance = attendanceData.team2.map(player => player.id);
                 }
                 console.log(`[SAVE] Adding attendance for team ${teamId}:`, attendance);
@@ -1757,10 +1969,48 @@
                 attendance: attendance // Add attendance to score data
               };
             }
-            const scoreData = JSON.stringify({
-              team1: getTeamScoreData(team1Card, match.team1Id),
-              team2: getTeamScoreData(team2Card, match.team2Id),
-            });
+            // Build team payloads for the current half
+            const team1Payload = getTeamScoreData(team1Card, currentMatch.team1Id);
+            const team2Payload = getTeamScoreData(team2Card, currentMatch.team2Id);
+
+            // If we're in viewing mode and we have existing parsed data, merge the current half into it
+            let finalScoreObj = null;
+            if (isViewingMode && window.viewingParsedData) {
+              try {
+                // Clone to avoid mutating original
+                const existing = JSON.parse(JSON.stringify(window.viewingParsedData || {}));
+
+                // Ensure team objects
+                existing.team1 = existing.team1 || { goals: [], cards: [], attendance: [] };
+                existing.team2 = existing.team2 || { goals: [], cards: [], attendance: [] };
+
+                // Merge goals: remove goals from current half then append new ones
+                existing.team1.goals = (existing.team1.goals || []).filter(g => !(g && g.half === currentHalf)).concat(team1Payload.goals || []);
+                existing.team2.goals = (existing.team2.goals || []).filter(g => !(g && g.half === currentHalf)).concat(team2Payload.goals || []);
+
+                // Merge cards similarly
+                existing.team1.cards = (existing.team1.cards || []).filter(c => !(c && c.half === currentHalf)).concat(team1Payload.cards || []);
+                existing.team2.cards = (existing.team2.cards || []).filter(c => !(c && c.half === currentHalf)).concat(team2Payload.cards || []);
+
+                // Preserve attendance: prefer payload attendance if provided, otherwise keep existing
+                if (Array.isArray(team1Payload.attendance) && team1Payload.attendance.length) {
+                  existing.team1.attendance = team1Payload.attendance;
+                }
+                if (Array.isArray(team2Payload.attendance) && team2Payload.attendance.length) {
+                  existing.team2.attendance = team2Payload.attendance;
+                }
+
+                finalScoreObj = existing;
+              } catch (e) {
+                console.warn('Failed to merge viewingParsedData, falling back to current half payloads', e);
+                finalScoreObj = { team1: team1Payload, team2: team2Payload };
+              }
+            } else {
+              // Normal save (from start-match flow) — use collected halves aggregation
+              finalScoreObj = { team1: team1Payload, team2: team2Payload };
+            }
+
+            const scoreData = JSON.stringify(finalScoreObj);
 
             $.ajax({
               url: your_plugin_ajax_object.ajax_url,
@@ -1768,7 +2018,7 @@
               data: {
                 action: 'save_soccer_match_summary',
                 nonce: your_plugin_ajax_object.nonce,
-                match_id: match.id,
+                match_id: currentMatch.id,
                 final_score: finalScore,
                 first_half_fouls: firstHalfFouls,
                 second_half_fouls: secondHalfFouls,
@@ -1778,6 +2028,9 @@
               },
               success: function (response) {
                 if (response.success) {
+                  // Clear localStorage as match is now saved
+                  clearMatchFromLocalStorage();
+
                   showMessage('Match summary updated!', 'success');
                   loadRefereeMatches();
                   // keep popup open or close—close for now
@@ -1792,10 +2045,19 @@
         }
 
         // Existing renderer, kept intact for start-match flow
-        function renderMatchInterface(match, team1, team2) {
-          const matchId = match.id; // Store matchId for use in form handlers
-          const team1Name = team1.name;
-          const team2Name = team2.name;
+        function renderMatchInterface(matchData, team1Data, team2Data) {
+          console.log('Rendering match interface with:', { matchData, team1Data, team2Data });
+          
+          // Store current match and team data globally
+          currentMatch = matchData;
+          currentTeam1 = team1Data;
+          currentTeam2 = team2Data;
+          
+          console.log('Global match data set:', { currentMatch, currentTeam1, currentTeam2 });
+
+          const matchId = matchData.id;
+          const team1Name = team1Data.name;
+          const team2Name = team2Data.name;
 
           function buildDatalistOptions(members) {
             // Ensure members is an array and has valid data
@@ -1823,30 +2085,31 @@
           }', '${teamName} Jersey')">
           `;
 
-          const cardFormHTML = (teamNum, datalistOptions) => `
-            <form class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-4">
-              <input type="text" list="playerIdsTeam${teamNum}" class="w-full sm:w-32 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Player ID" />
-              <datalist id="playerIdsTeam${teamNum}">${datalistOptions}</datalist>
-              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition text-xs">Goal</button>
-              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition text-xs">Blue Card</button>
-              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-yellow-500 text-white font-semibold hover:bg-yellow-600 transition text-xs">Yellow Card</button>
-              <button type="button" class="w-full sm:w-auto px-3 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition text-xs">Red Card</button>
-            </form>
-        `;
+          const cardFormHTML = (teamNum, datalistOptions) => ``;
 
           // use global renderPlayerEventsTable
 
           const mainHtml = `
             <div class="space-y-8">
+                <!-- Half Selector (moved above team cards) -->
+                <div class="flex justify-end">
+                  <div class="flex items-center gap-3 mr-2">
+                    <label class="text-sm text-gray-300 mr-2">Half</label>
+                    <select id="halfSelector" class="px-2 py-1 rounded bg-white/10 text-white border border-white/20">
+                      <option value="first">First Half</option>
+                      <option value="second">Second Half</option>
+                    </select>
+                  </div>
+                </div>
                 <!-- Team 1 Card -->
                 <div class="card-hover glassmorphism team-scoring-card rounded-2xl p-6 border border-white/10 flex flex-col">
                     <h3 class="text-xl font-bold text-white flex items-center">${teamIconSVG(
-                      team1.jersey_image_url,
+                      currentTeam1.jersey_image_url,
                       team1Name
                     )}<span class="ml-1">${team1Name}</span></h3>
                     ${cardFormHTML(
                       1,
-                      buildDatalistOptions(team1.members || [])
+                      buildDatalistOptions(currentTeam1.members || [])
                     )}
                     <div class="events-table-container flex-grow"></div>
                 </div>
@@ -1854,23 +2117,23 @@
                 <!-- Team 2 Card -->
                 <div class="card-hover glassmorphism team-scoring-card rounded-2xl p-6 border border-white/10 flex flex-col">
                     <h3 class="text-xl font-bold text-white flex items-center">${teamIconSVG(
-                      team2.jersey_image_url,
+                      currentTeam2.jersey_image_url,
                       team2Name
                     )}<span class="ml-1">${team2Name}</span></h3>
                     ${cardFormHTML(
                       2,
-                      buildDatalistOptions(team2.members || [])
+                      buildDatalistOptions(currentTeam2.members || [])
                     )}
                     <div class="events-table-container flex-grow"></div>
                 </div>
 
-                <!-- Match Summary Card -->
-                <div class="card-hover glassmorphism match-summary-card p-6 rounded-2xl">
-                    <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h2a4 4 0 014 4v2M9 17H7a4 4 0 01-4-4V7a4 4 0 014-4h10a4 4 0 014 4v6a4 4 0 01-4 4h-2"></path></svg>
-                        Match Summary
-                    </h3>
-                    <form id="matchSummaryForm" class="flex flex-col gap-4">
+        <!-- Match Summary Card -->
+        <div class="card-hover glassmorphism match-summary-card p-6 rounded-2xl">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h2a4 4 0 014 4v2M9 17H7a4 4 0 01-4-4V7a4 4 0 014-4h10a4 4 0 014 4v6a4 4 0 01-4 4h-2"></path></svg>
+                Match Summary
+            </h3>
+          <form id="matchSummaryForm" class="flex flex-col gap-4">
                         <div><label class="block text-white font-semibold mb-1">Final Score</label><input type="text" name="final_score" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="e.g. 3-2" required></div>
                         <div><label class="block text-white font-semibold mb-1">1st Half Fouls</label><input type="text" name="first_half_fouls" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Enter fouls in 1st half"></div>
                         <div><label class="block text-white font-semibold mb-1">2nd Half Fouls</label><input type="text" name="second_half_fouls" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Enter fouls in 2nd half"></div>
@@ -1883,26 +2146,277 @@
 
           $("#admin-start-match-root").html(mainHtml);
 
-          $(".team-scoring-card").each(function (idx) {
+          // Add auto-save for form field changes
+          $('#matchSummaryForm input, #matchSummaryForm textarea').on('change keyup', function() {
+            if (!isViewingMode) {
+              saveMatchToLocalStorage();
+            }
+          });
+
+          // Half selector handling (switch between first/second half)
+          $('#halfSelector').on('change', function() {
+            const selected = $(this).val();
+            if (!selected) return;
+            // Save current half before switching
+            if (!isViewingMode) {
+              saveMatchToLocalStorage();
+            }
+            currentHalf = selected;
+            // Refresh UI to reflect selected half's data
+            if (!isViewingMode) {
+              const saved = loadMatchFromLocalStorage();
+              if (saved && saved.matchId === currentMatch.id) {
+                const halves = saved.halves || {};
+                const firstHalf = halves.first || {};
+                const secondHalf = halves.second || {};
+
+                // Calculate and show total goals from both halves
+                let team1TotalGoals = 0;
+                let team2TotalGoals = 0;
+
+                // Count first half goals
+                if (firstHalf.team1 && firstHalf.team1.events) {
+                  firstHalf.team1.events.forEach(player => {
+                    if (player.goals) team1TotalGoals += player.goals.length;
+                  });
+                }
+                if (firstHalf.team2 && firstHalf.team2.events) {
+                  firstHalf.team2.events.forEach(player => {
+                    if (player.goals) team2TotalGoals += player.goals.length;
+                  });
+                }
+
+                // Add second half goals
+                if (secondHalf.team1 && secondHalf.team1.events) {
+                  secondHalf.team1.events.forEach(player => {
+                    if (player.goals) team1TotalGoals += player.goals.length;
+                  });
+                }
+                if (secondHalf.team2 && secondHalf.team2.events) {
+                  secondHalf.team2.events.forEach(player => {
+                    if (player.goals) team2TotalGoals += player.goals.length;
+                  });
+                }
+
+                // Show total goals
+                $('input[name="final_score"]').val(`${team1TotalGoals}-${team2TotalGoals}`);
+
+                // Count and show first half fouls
+                let team1FirstHalfFouls = 0;
+                let team2FirstHalfFouls = 0;
+                if (firstHalf.team1 && firstHalf.team1.events) {
+                  firstHalf.team1.events.forEach(player => {
+                    if (player.blue) team1FirstHalfFouls++;
+                    if (player.yellow) team1FirstHalfFouls++;
+                    if (player.red) team1FirstHalfFouls++;
+                  });
+                }
+                if (firstHalf.team2 && firstHalf.team2.events) {
+                  firstHalf.team2.events.forEach(player => {
+                    if (player.blue) team2FirstHalfFouls++;
+                    if (player.yellow) team2FirstHalfFouls++;
+                    if (player.red) team2FirstHalfFouls++;
+                  });
+                }
+                $('input[name="first_half_fouls"]').val(`${team1FirstHalfFouls}-${team2FirstHalfFouls}`);
+
+                // Count and show second half fouls
+                let team1SecondHalfFouls = 0;
+                let team2SecondHalfFouls = 0;
+                if (secondHalf.team1 && secondHalf.team1.events) {
+                  secondHalf.team1.events.forEach(player => {
+                    if (player.blue) team1SecondHalfFouls++;
+                    if (player.yellow) team1SecondHalfFouls++;
+                    if (player.red) team1SecondHalfFouls++;
+                  });
+                }
+                if (secondHalf.team2 && secondHalf.team2.events) {
+                  secondHalf.team2.events.forEach(player => {
+                    if (player.blue) team2SecondHalfFouls++;
+                    if (player.yellow) team2SecondHalfFouls++;
+                    if (player.red) team2SecondHalfFouls++;
+                  });
+                }
+                $('input[name="second_half_fouls"]').val(`${team1SecondHalfFouls}-${team2SecondHalfFouls}`);
+
+                // Always show caution/notes from current half
+                const currentHalfData = halves[currentHalf] || {};
+                $('textarea[name="caution_desc"]').val(currentHalfData.summary ? currentHalfData.summary.cautionDesc || '' : '');
+                $('textarea[name="additional_notes"]').val(currentHalfData.summary ? currentHalfData.summary.additionalNotes || '' : '');
+
+                // Apply team tables
+                const $cards = $(".team-scoring-card");
+                function applyHalfToCard(idx) {
+                  const $card = $cards.eq(idx);
+                  const halfData = (saved.halves && saved.halves[currentHalf]) || {};
+                  const t = idx === 0 ? halfData.team1 || null : halfData.team2 || null;
+                  // If we have saved data for this half, use it. Otherwise create a fresh default events array from the team members (clears previous half checkboxes)
+                  if (t && (Array.isArray(t.events) || Array.isArray(t.goals))) {
+                    $card.data('playerEvents', t.events || []);
+                    $card.data('teamGoals', t.goals || []);
+                  } else {
+                    // build fresh default events from current team members
+                    const members = idx === 0 ? (currentTeam1.members || []) : (currentTeam2.members || []);
+                    const defaultEvents = members.map(m => ({
+                      id: m.id,
+                      blue: false,
+                      yellow: false,
+                      red: false,
+                      blue_reason_code: '',
+                      blue_reason_text: '',
+                      yellow_reason_code: '',
+                      yellow_reason_text: '',
+                      red_reason_code: '',
+                      red_reason_text: '',
+                      goals: []
+                    }));
+                    $card.data('playerEvents', defaultEvents);
+                    $card.data('teamGoals', []);
+                  }
+                  $card.data('teamMembers', idx === 0 ? currentTeam1.members : currentTeam2.members);
+                  const $tableContainer = $card.find('.events-table-container');
+                  renderPlayerEventsTable($tableContainer, $card.data('playerEvents'), $card.data('teamGoals'));
+                }
+                applyHalfToCard(0);
+                applyHalfToCard(1);
+              }
+            }
+          });
+
+          // Check for saved match data (per-half aware)
+          if (!isViewingMode) {
+            const savedMatch = loadMatchFromLocalStorage();
+            if (savedMatch && savedMatch.matchId === currentMatch.id) {
+              // Restore attendance data (applies to whole match)
+              if (savedMatch.attendanceData) {
+                attendanceData = savedMatch.attendanceData;
+              }
+
+              // Ensure half selector reflects currentHalf
+              $('#halfSelector').val(currentHalf);
+
+              const halves = savedMatch.halves || {};
+              const firstHalf = halves.first || {};
+              const secondHalf = halves.second || {};
+
+              // Calculate and show total goals from both halves
+              let team1TotalGoals = 0;
+              let team2TotalGoals = 0;
+
+              // Count first half goals
+              if (firstHalf.team1 && firstHalf.team1.events) {
+                firstHalf.team1.events.forEach(player => {
+                  if (player.goals) team1TotalGoals += player.goals.length;
+                });
+              }
+              if (firstHalf.team2 && firstHalf.team2.events) {
+                firstHalf.team2.events.forEach(player => {
+                  if (player.goals) team2TotalGoals += player.goals.length;
+                });
+              }
+
+              // Add second half goals
+              if (secondHalf.team1 && secondHalf.team1.events) {
+                secondHalf.team1.events.forEach(player => {
+                  if (player.goals) team1TotalGoals += player.goals.length;
+                });
+              }
+              if (secondHalf.team2 && secondHalf.team2.events) {
+                secondHalf.team2.events.forEach(player => {
+                  if (player.goals) team2TotalGoals += player.goals.length;
+                });
+              }
+
+              // Show total goals
+              $('input[name="final_score"]').val(`${team1TotalGoals}-${team2TotalGoals}`);
+
+              // Calculate and show first half fouls
+              let team1FirstHalfFouls = 0;
+              let team2FirstHalfFouls = 0;
+              if (firstHalf.team1 && firstHalf.team1.events) {
+                firstHalf.team1.events.forEach(player => {
+                  if (player.blue) team1FirstHalfFouls++;
+                  if (player.yellow) team1FirstHalfFouls++;
+                  if (player.red) team1FirstHalfFouls++;
+                });
+              }
+              if (firstHalf.team2 && firstHalf.team2.events) {
+                firstHalf.team2.events.forEach(player => {
+                  if (player.blue) team2FirstHalfFouls++;
+                  if (player.yellow) team2FirstHalfFouls++;
+                  if (player.red) team2FirstHalfFouls++;
+                });
+              }
+              $('input[name="first_half_fouls"]').val(`${team1FirstHalfFouls}-${team2FirstHalfFouls}`);
+
+              // Calculate and show second half fouls
+              let team1SecondHalfFouls = 0;
+              let team2SecondHalfFouls = 0;
+              if (secondHalf.team1 && secondHalf.team1.events) {
+                secondHalf.team1.events.forEach(player => {
+                  if (player.blue) team1SecondHalfFouls++;
+                  if (player.yellow) team1SecondHalfFouls++;
+                  if (player.red) team1SecondHalfFouls++;
+                });
+              }
+              if (secondHalf.team2 && secondHalf.team2.events) {
+                secondHalf.team2.events.forEach(player => {
+                  if (player.blue) team2SecondHalfFouls++;
+                  if (player.yellow) team2SecondHalfFouls++;
+                  if (player.red) team2SecondHalfFouls++;
+                });
+              }
+              $('input[name="second_half_fouls"]').val(`${team1SecondHalfFouls}-${team2SecondHalfFouls}`);
+
+              // Show current half's caution/notes
+              const currentHalfData = halves[currentHalf] || {};
+              if (currentHalfData.summary) {
+                $('textarea[name="caution_desc"]').val(currentHalfData.summary.cautionDesc || '');
+                $('textarea[name="additional_notes"]').val(currentHalfData.summary.additionalNotes || '');
+              }
+            }
+          }          $(".team-scoring-card").each(function (idx) {
             const $card = $(this);
             // Pre-populate events with all present players so table shows everyone
-            const members = idx === 0 ? (team1.members || []) : (team2.members || []);
-            const initialEvents = members.map(m => ({
-              id: m.id,
-              blue: false,
-              yellow: false,
-              red: false,
-              blue_reason_code: '',
-              blue_reason_text: '',
-              yellow_reason_code: '',
-              yellow_reason_text: '',
-              red_reason_code: '',
-              red_reason_text: ''
-            }));
+            const members = idx === 0 ? (currentTeam1.members || []) : (currentTeam2.members || []);
+            let initialEvents;
+            let initialGoals;
+
+            // Check for saved data (support per-half storage)
+            if (!isViewingMode) {
+              const savedMatch = loadMatchFromLocalStorage();
+              if (savedMatch && savedMatch.matchId === currentMatch.id) {
+                const halves = savedMatch.halves || {};
+                const halfData = halves[currentHalf] || {};
+                const teamData = idx === 0 ? (halfData.team1 || {}) : (halfData.team2 || {});
+                if (teamData) {
+                  initialEvents = teamData.events || [];
+                  initialGoals = teamData.goals || [];
+                }
+              }
+            }
+
+            // If no saved data, initialize with defaults
+            if (!initialEvents) {
+              initialEvents = members.map(m => ({
+                id: m.id,
+                blue: false,
+                yellow: false,
+                red: false,
+                blue_reason_code: '',
+                blue_reason_text: '',
+                yellow_reason_code: '',
+                yellow_reason_text: '',
+                red_reason_code: '',
+                red_reason_text: '',
+                goals: []
+              }));
+            }
+
             $card.data("playerEvents", initialEvents);
-            $card.data("teamGoals", []);
+            $card.data("teamGoals", initialGoals || []);
             // Attach team members for name lookups
-            $card.data('teamMembers', idx === 0 ? (team1.members || []) : (team2.members || []));
+            $card.data('teamMembers', idx === 0 ? currentTeam1.members : currentTeam2.members);
             const $tableContainer = $card.find(".events-table-container");
 
             renderPlayerEventsTable(
@@ -1910,66 +2424,6 @@
               $card.data("playerEvents"),
               $card.data("teamGoals")
             );
-
-            $card.find("button").on("click", function (e) {
-              e.preventDefault();
-              const $input = $card.find('input[type="text"]');
-              const playerId = $input.val().trim();
-
-              if (!playerId) {
-                showMessage("Please enter a player ID.", "error");
-                return;
-              }
-
-              // Validate that the player ID exists in the team's member list
-              const teamIndex = $(".team-scoring-card").index($card) + 1;
-              const teamMembers =
-                teamIndex === 1 ? team1.members : team2.members;
-              const validPlayer = teamMembers.find(
-                (member) => member.id == playerId
-              );
-
-              if (!validPlayer) {
-                showMessage(
-                  "Invalid player ID. Please select a player from the team roster.",
-                  "error"
-                );
-                return;
-              }
-
-              let playerEvents = $card.data("playerEvents");
-              let teamGoals = $card.data("teamGoals");
-        let player = playerEvents.find((ev) => ev.id == playerId); // Use == for loose comparison
-              if (!player) {
-                player = {
-                  id: playerId,
-                  blue: false,
-                  yellow: false,
-                  red: false,
-          blue_reason_code: '',
-          blue_reason_text: '',
-          yellow_reason_code: '',
-          yellow_reason_text: '',
-          red_reason_code: '',
-          red_reason_text: '',
-                };
-                playerEvents.push(player);
-              }
-
-              const buttonText = $(this).text();
-              if (buttonText.includes("Goal")) {
-                teamGoals.push(playerId);
-              } else if (buttonText.includes("Blue")) {
-                player.blue = true;
-              } else if (buttonText.includes("Yellow")) {
-                player.yellow = true;
-              } else if (buttonText.includes("Red")) {
-                player.red = true;
-              }
-
-              renderPlayerEventsTable($tableContainer, playerEvents, teamGoals);
-              $input.val("");
-            });
           });
 
           $("#matchSummaryForm").on("submit", function (e) {
@@ -1984,67 +2438,93 @@
             const team1Card = $cards.eq(0);
             const team2Card = $cards.eq(1);
 
-            function getTeamScoreData($card, teamId) {
-              const goals = ($card.data("teamGoals") || []).map((pid, idx) => ({
-                playerId: pid,
-                goalIndex: idx + 1,
-              }));
-              const cardsArr = ($card.data("playerEvents") || []).map((ev) => ({
-                playerId: ev.id,
-                blue: !!ev.blue,
-                yellow: !!ev.yellow,
-                red: !!ev.red,
-                blue_reason_code: ev.blue ? (ev.blue_reason_code || '') : '',
-                blue_reason_text: ev.blue ? (ev.blue_reason_text || '') : '',
-                yellow_reason_code: ev.yellow ? (ev.yellow_reason_code || '') : '',
-                yellow_reason_text: ev.yellow ? (ev.yellow_reason_text || '') : '',
-                red_reason_code: ev.red ? (ev.red_reason_code || '') : '',
-                red_reason_text: ev.red ? (ev.red_reason_text || '') : ''
-              }));
-              
-              // Add attendance data if available (preserve existing when editing)
-              let attendance = [];
-              console.log(`[DEBUG] Processing team ${teamId}, existingAttendanceData:`, existingAttendanceData);
-              
-              if (existingAttendanceData && (existingAttendanceData.team1.length > 0 || existingAttendanceData.team2.length > 0)) {
-                // Use existing attendance data when editing - preserve it exactly
-                if (teamId == match.team1Id) {
-                  attendance = existingAttendanceData.team1;
-                } else if (teamId == match.team2Id) {
-                  attendance = existingAttendanceData.team2;
-                }
-                console.log(`[EDIT] Using existing attendance for team ${teamId}:`, attendance);
-              } else if (attendanceData && attendanceData.team1 && attendanceData.team2 && (attendanceData.team1.length > 0 || attendanceData.team2.length > 0)) {
-                // Use new attendance data from attendance popup (for new matches)
-                if (teamId == match.team1Id) {
-                  attendance = attendanceData.team1.map(player => player.id);
-                } else if (teamId == match.team2Id) {
-                  attendance = attendanceData.team2.map(player => player.id);
-                }
-                console.log(`[NEW] Using new attendance for team ${teamId}:`, attendance);
-              } else {
-                // For editing: Don't include attendance field at all if no data
-                // This prevents overwriting existing data with empty arrays
-                console.log(`[SKIP] No attendance data for team ${teamId} - skipping attendance field`);
-                return { 
-                  id: teamId, 
-                  goals, 
-                  cards: cardsArr
-                  // No attendance field - this prevents overwriting existing data
-                };
+            // Collect goals and cards from both halves
+            let allGoalsTeam1 = [];
+            let allGoalsTeam2 = [];
+            let allCardsTeam1 = [];
+            let allCardsTeam2 = [];
+            let attendanceTeam1 = [];
+            let attendanceTeam2 = [];
+
+            if (!isViewingMode) {
+              const saved = loadMatchFromLocalStorage();
+              if (saved && saved.halves) {
+                ['first', 'second'].forEach(half => {
+                  const halfData = saved.halves[half];
+                  if (halfData) {
+                    if (halfData.team1 && halfData.team1.events) {
+                      halfData.team1.events.forEach(player => {
+                        if (player.goals) {
+                          player.goals.forEach(goalIndex => {
+                            allGoalsTeam1.push({ playerId: player.id, goalIndex: goalIndex, half: half });
+                          });
+                        }
+                        if (player.blue || player.yellow || player.red) {
+                          allCardsTeam1.push({
+                            playerId: player.id,
+                            blue: player.blue,
+                            yellow: player.yellow,
+                            red: player.red,
+                            blue_reason_code: player.blue_reason_code || '',
+                            blue_reason_text: player.blue_reason_text || '',
+                            yellow_reason_code: player.yellow_reason_code || '',
+                            yellow_reason_text: player.yellow_reason_text || '',
+                            red_reason_code: player.red_reason_code || '',
+                            red_reason_text: player.red_reason_text || '',
+                            half: half
+                          });
+                        }
+                      });
+                    }
+                    if (halfData.team2 && halfData.team2.events) {
+                      halfData.team2.events.forEach(player => {
+                        if (player.goals) {
+                          player.goals.forEach(goalIndex => {
+                            allGoalsTeam2.push({ playerId: player.id, goalIndex: goalIndex, half: half });
+                          });
+                        }
+                        if (player.blue || player.yellow || player.red) {
+                          allCardsTeam2.push({
+                            playerId: player.id,
+                            blue: player.blue,
+                            yellow: player.yellow,
+                            red: player.red,
+                            blue_reason_code: player.blue_reason_code || '',
+                            blue_reason_text: player.blue_reason_text || '',
+                            yellow_reason_code: player.yellow_reason_code || '',
+                            yellow_reason_text: player.yellow_reason_text || '',
+                            red_reason_code: player.red_reason_code || '',
+                            red_reason_text: player.red_reason_text || '',
+                            half: half
+                          });
+                        }
+                      });
+                    }
+                  }
+                });
               }
-              
-              return { 
-                id: teamId, 
-                goals, 
-                cards: cardsArr, 
-                attendance: attendance // Add attendance to score data
+              // Get attendance from saved
+              if (saved && saved.attendanceData) {
+                attendanceTeam1 = saved.attendanceData.team1 || [];
+                attendanceTeam2 = saved.attendanceData.team2 || [];
+              }
+            }
+
+            function getTeamScoreData(teamId, goals, cards, attendance) {
+              // Preserve card objects as-is so each card keeps its `half` metadata.
+              // The `cards` array is expected to already contain per-half entries (may include multiple entries
+              // for the same player across different halves). Do not merge them here.
+              return {
+                id: teamId,
+                goals,
+                cards: cards || [],
+                attendance: attendance
               };
             }
 
             const scoreData = JSON.stringify({
-              team1: getTeamScoreData(team1Card, match.team1Id),
-              team2: getTeamScoreData(team2Card, match.team2Id),
+              team1: getTeamScoreData(currentMatch.team1Id, allGoalsTeam1, allCardsTeam1, attendanceTeam1),
+              team2: getTeamScoreData(currentMatch.team2Id, allGoalsTeam2, allCardsTeam2, attendanceTeam2),
             });
 
             $.ajax({
@@ -2063,12 +2543,13 @@
               },
               success: function (response) {
                 if (response.success) {
-                  showMessage("Match summary saved!", "success");
-                  loadRefereeMatches();
-                  $("#admin-start-match-root").addClass("hidden").html("");
-                  $("#referee-matches-list, #referee-stat-cards").removeClass(
-                    "hidden"
-                  );
+                    localStorage.removeItem('currentMatch');  // Clear match data
+                    showMessage("Match summary saved!", "success");
+                    loadRefereeMatches();
+                    $("#admin-start-match-root").addClass("hidden").html("");
+                    $("#referee-matches-list, #referee-stat-cards").removeClass(
+                      "hidden"
+                    );
                 } else {
                   showMessage(
                     response.data.message || "Failed to save match summary.",
@@ -2081,6 +2562,150 @@
               },
             });
           });
+        }
+
+        function updateMatchSummaryStats() {
+          let halves = {};
+          if (!isViewingMode) {
+            const saved = loadMatchFromLocalStorage();
+            halves = (saved && saved.halves) || {};
+          }
+          
+          // Get current UI state
+          const $cards = $(".team-scoring-card");
+          let currentTeam1Goals = 0;
+          let currentTeam2Goals = 0;
+          let currentTeam1Fouls = 0;
+          let currentTeam2Fouls = 0;
+
+          // Calculate current half stats from UI
+          const team1Events = $cards.eq(0).data("playerEvents") || [];
+          team1Events.forEach(player => {
+            if (player.goals) {
+              currentTeam1Goals += player.goals.length;
+            }
+            // Count cards as fouls
+            if (player.blue) currentTeam1Fouls++;
+            if (player.yellow) currentTeam1Fouls++;
+            if (player.red) currentTeam1Fouls++;
+          });
+
+          const team2Events = $cards.eq(1).data("playerEvents") || [];
+          team2Events.forEach(player => {
+            if (player.goals) {
+              currentTeam2Goals += player.goals.length;
+            }
+            // Count cards as fouls
+            if (player.blue) currentTeam2Fouls++;
+            if (player.yellow) currentTeam2Fouls++;
+            if (player.red) currentTeam2Fouls++;
+          });
+
+          // Get other half's goals (if any)
+          const otherHalf = currentHalf === 'first' ? 'second' : 'first';
+          const otherHalfData = halves[otherHalf] || {};
+          
+          let otherTeam1Goals = 0;
+          let otherTeam2Goals = 0;
+
+          if (otherHalfData.team1 && otherHalfData.team1.events) {
+            otherHalfData.team1.events.forEach(player => {
+              if (player.goals) {
+                otherTeam1Goals += player.goals.length;
+              }
+            });
+          }
+          if (otherHalfData.team2 && otherHalfData.team2.events) {
+            otherHalfData.team2.events.forEach(player => {
+              if (player.goals) {
+                otherTeam2Goals += player.goals.length;
+              }
+            });
+          }
+
+          // Update final score with TOTAL goals from both halves
+          const totalTeam1Goals = currentTeam1Goals + otherTeam1Goals;
+          const totalTeam2Goals = currentTeam2Goals + otherTeam2Goals;
+          $('input[name="final_score"]').val(`${totalTeam1Goals}-${totalTeam2Goals}`);
+          
+          // Update fouls only for current half
+          if (currentHalf === 'first') {
+            $('input[name="first_half_fouls"]').val(`${currentTeam1Fouls}-${currentTeam2Fouls}`);
+          } else {
+            $('input[name="second_half_fouls"]').val(`${currentTeam1Fouls}-${currentTeam2Fouls}`);
+          }
+        }
+
+        // Local storage functions for match data
+        function saveMatchToLocalStorage() {
+          if (!currentMatch) return; // Don't save if no match is active
+
+          const $cards = $(".team-scoring-card");
+          // Use per-half storage for events/goals/summary. Structure:
+          // { matchId, match, halves: { first: { team1:{events,goals}, team2:..., summary:{} }, second: {...} }, attendanceData }
+          let saved = {};
+          try { saved = JSON.parse(localStorage.getItem('currentMatch') || '{}'); } catch(e) { saved = {}; }
+          if (!saved || saved.matchId !== currentMatch.id) {
+            // If stored item belongs to another match or is empty, create fresh
+            saved = { matchId: currentMatch.id, match: currentMatch, halves: {} };
+          }
+
+          // Ensure halves object exists
+          saved.match = currentMatch;
+          saved.halves = saved.halves || {};
+          saved.halves[currentHalf] = saved.halves[currentHalf] || {};
+
+          saved.halves[currentHalf].team1 = {
+            events: $cards.eq(0).data("playerEvents") || [],
+            goals: $cards.eq(0).data("teamGoals") || []
+          };
+          saved.halves[currentHalf].team2 = {
+            events: $cards.eq(1).data("playerEvents") || [],
+            goals: $cards.eq(1).data("teamGoals") || []
+          };
+          saved.halves[currentHalf].summary = {
+            finalScore: $('input[name="final_score"]').val(),
+            firstHalfFouls: $('input[name="first_half_fouls"]').val(),
+            secondHalfFouls: $('input[name="second_half_fouls"]').val(),
+            cautionDesc: $('textarea[name="caution_desc"]').val(),
+            additionalNotes: $('textarea[name="additional_notes"]').val()
+          };
+
+          // Always keep attendanceData at top-level (applies to entire match)
+          saved.attendanceData = attendanceData;
+
+          console.log('Saving match data to localStorage (per-half):', saved);
+          localStorage.setItem('currentMatch', JSON.stringify(saved));
+        }
+
+        function loadMatchFromLocalStorage() {
+          const savedMatch = localStorage.getItem('currentMatch');
+          if (savedMatch) {
+            try {
+              let parsedMatch = JSON.parse(savedMatch);
+              // Migrate legacy format: if parsedMatch has team1/team2 at top-level, move into halves.first
+              if (parsedMatch && parsedMatch.team1 && parsedMatch.team2 && !parsedMatch.halves) {
+                parsedMatch.halves = parsedMatch.halves || {};
+                parsedMatch.halves.first = parsedMatch.halves.first || {};
+                parsedMatch.halves.first.team1 = { events: parsedMatch.team1.events || [], goals: parsedMatch.team1.goals || [] };
+                parsedMatch.halves.first.team2 = { events: parsedMatch.team2.events || [], goals: parsedMatch.team2.goals || [] };
+                parsedMatch.halves.first.summary = parsedMatch.summary || {};
+                // Remove legacy fields to avoid duplication
+                delete parsedMatch.team1; delete parsedMatch.team2; delete parsedMatch.summary;
+              }
+              console.log('Loaded match data from localStorage:', parsedMatch);
+              return parsedMatch;
+            } catch (e) {
+              console.error('Error loading match data from localStorage:', e);
+              return null;
+            }
+          }
+          console.log('No saved match found in localStorage');
+          return null;
+        }
+
+        function clearMatchFromLocalStorage() {
+          localStorage.removeItem('currentMatch');
         }
 
         function showMessage(message, type) {

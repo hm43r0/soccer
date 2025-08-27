@@ -1084,6 +1084,42 @@ function your_plugin_handle_create_match()
         update_post_meta($post_id, '_match_location', $match_location);
         update_post_meta($post_id, '_match_week', $match_week);
         update_post_meta($post_id, 'is_completed', '0'); // Set default value
+
+        // --- Send notification email to the assigned referee ---
+        if ($referee_id) {
+            $ref_user = get_userdata($referee_id);
+            if ($ref_user && ! empty($ref_user->user_email)) {
+                $team1_name = get_the_title($team1_id);
+                $team2_name = get_the_title($team2_id);
+
+                $display_name = trim(get_user_meta($referee_id, 'first_name', true) . ' ' . get_user_meta($referee_id, 'last_name', true));
+                if (empty($display_name)) {
+                    $display_name = $ref_user->display_name ? $ref_user->display_name : $ref_user->user_login;
+                }
+
+                $to = $ref_user->user_email;
+                $subject = sprintf('Match assigned: %s vs %s on %s', $team1_name, $team2_name, $match_date);
+
+                $message = '<p>Dear ' . esc_html($display_name) . ',</p>';
+                $message .= '<p>A match has been assigned to you. Below are the details:</p>';
+                $message .= '<ul>';
+                $message .= '<li><strong>Teams:</strong> ' . esc_html($team1_name) . ' vs ' . esc_html($team2_name) . '</li>';
+                $message .= '<li><strong>Date:</strong> ' . esc_html($match_date) . '</li>';
+                $message .= '<li><strong>Location:</strong> ' . esc_html($match_location) . '</li>';
+                $message .= '<li><strong>Week:</strong> ' . esc_html($match_week) . '</li>';
+                $message .= '</ul>';
+                $message .= '<p>Please log in to your account to view the match and manage it: ' . esc_url(admin_url()) . '</p>';
+                $message .= '<p>Regards,<br/>' . esc_html(get_bloginfo('name')) . '</p>';
+
+                $headers = array('Content-Type: text/html; charset=UTF-8');
+                // Attempt to send email; do not fail the AJAX response if mail fails.
+                $mail_sent = wp_mail($to, $subject, $message, $headers);
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log(sprintf('Match assignment email to %s (%s) %s', $to, $referee_id, $mail_sent ? 'sent' : 'failed'));
+                }
+            }
+        }
+
         wp_send_json_success(array('message' => 'Match created successfully!', 'match_id' => $post_id));
     }
 }
