@@ -2,8 +2,14 @@
 function populateRefereeSelect() {
     const refereeSelect = document.getElementById('matchReferee');
     if (!refereeSelect) return;
+
+    // Prevent multiple simultaneous calls
+    if (populateRefereeSelect.isLoading) return;
+    populateRefereeSelect.isLoading = true;
+
     // Clear existing options except the placeholder
     refereeSelect.innerHTML = '<option value="" disabled selected hidden>Select Referee</option>';
+
     jQuery.ajax({
         url: your_plugin_ajax_object.ajax_url,
         type: 'POST',
@@ -23,6 +29,10 @@ function populateRefereeSelect() {
         },
         error: function() {
             // Optionally show an error or fallback
+        },
+        complete: function() {
+            // Reset the loading flag
+            populateRefereeSelect.isLoading = false;
         }
     });
 }

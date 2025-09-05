@@ -2569,6 +2569,38 @@
           if (!isViewingMode) {
             const saved = loadMatchFromLocalStorage();
             halves = (saved && saved.halves) || {};
+          } else {
+            // In viewing mode, use the saved data from the server
+            if (window.viewingParsedData) {
+              halves = {
+                first: {
+                  team1: { events: [], goals: [] },
+                  team2: { events: [], goals: [] }
+                },
+                second: {
+                  team1: { events: [], goals: [] },
+                  team2: { events: [], goals: [] }
+                }
+              };
+
+              // Populate halves with saved data
+              if (window.viewingParsedData.team1 && window.viewingParsedData.team1.goals) {
+                window.viewingParsedData.team1.goals.forEach(goal => {
+                  if (goal && goal.half) {
+                    if (!halves[goal.half]) halves[goal.half] = { team1: { events: [], goals: [] }, team2: { events: [], goals: [] } };
+                    halves[goal.half].team1.goals.push(goal);
+                  }
+                });
+              }
+              if (window.viewingParsedData.team2 && window.viewingParsedData.team2.goals) {
+                window.viewingParsedData.team2.goals.forEach(goal => {
+                  if (goal && goal.half) {
+                    if (!halves[goal.half]) halves[goal.half] = { team1: { events: [], goals: [] }, team2: { events: [], goals: [] } };
+                    halves[goal.half].team2.goals.push(goal);
+                  }
+                });
+              }
+            }
           }
           
           // Get current UI state
@@ -2608,19 +2640,11 @@
           let otherTeam1Goals = 0;
           let otherTeam2Goals = 0;
 
-          if (otherHalfData.team1 && otherHalfData.team1.events) {
-            otherHalfData.team1.events.forEach(player => {
-              if (player.goals) {
-                otherTeam1Goals += player.goals.length;
-              }
-            });
+          if (otherHalfData.team1 && otherHalfData.team1.goals) {
+            otherTeam1Goals = otherHalfData.team1.goals.length;
           }
-          if (otherHalfData.team2 && otherHalfData.team2.events) {
-            otherHalfData.team2.events.forEach(player => {
-              if (player.goals) {
-                otherTeam2Goals += player.goals.length;
-              }
-            });
+          if (otherHalfData.team2 && otherHalfData.team2.goals) {
+            otherTeam2Goals = otherHalfData.team2.goals.length;
           }
 
           // Update final score with TOTAL goals from both halves

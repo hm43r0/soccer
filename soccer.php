@@ -1100,16 +1100,19 @@ function your_plugin_handle_create_match()
                 $to = $ref_user->user_email;
                 $subject = sprintf('Match assigned: %s vs %s on %s', $team1_name, $team2_name, $match_date);
 
-                $message = '<p>Dear ' . esc_html($display_name) . ',</p>';
-                $message .= '<p>A match has been assigned to you. Below are the details:</p>';
-                $message .= '<ul>';
-                $message .= '<li><strong>Teams:</strong> ' . esc_html($team1_name) . ' vs ' . esc_html($team2_name) . '</li>';
-                $message .= '<li><strong>Date:</strong> ' . esc_html($match_date) . '</li>';
-                $message .= '<li><strong>Location:</strong> ' . esc_html($match_location) . '</li>';
-                $message .= '<li><strong>Week:</strong> ' . esc_html($match_week) . '</li>';
-                $message .= '</ul>';
-                $message .= '<p>Please log in to your account to view the match and manage it: ' . esc_url(admin_url()) . '</p>';
-                $message .= '<p>Regards,<br/>' . esc_html(get_bloginfo('name')) . '</p>';
+                // Get saved template and replace variables
+                $template = your_plugin_get_referee_email_template();
+                $match_link = get_edit_post_link($post_id) ? get_edit_post_link($post_id) : admin_url('post.php?post=' . $post_id . '&action=edit');
+                $replacements = array(
+                    '[referee-name]' => esc_html($display_name),
+                    '[team-first-name]' => esc_html($team1_name),
+                    '[team-second-name]' => esc_html($team2_name),
+                    '[match-date]' => esc_html($match_date),
+                    '[match-location]' => esc_html($match_location),
+                    '[match-week]' => esc_html($match_week),
+                );
+
+                $message = str_replace(array_keys($replacements), array_values($replacements), $template);
 
                 $headers = array('Content-Type: text/html; charset=UTF-8');
                 // Attempt to send email; do not fail the AJAX response if mail fails.
@@ -1621,3 +1624,91 @@ function your_plugin_isolate_from_theme()
 
 // Hook the theme isolation function
 add_action('wp_enqueue_scripts', 'your_plugin_isolate_from_theme', 999);
+
+// --- Referee Email Configuration ---
+// Option name to store template
+define('SOCCER_REFEREE_EMAIL_OPTION', 'soccer_referee_email_template');
+
+// Default HTML template (same content as originally sent)
+function your_plugin_default_referee_email_template()
+{
+    $site_name = get_bloginfo('name');
+    return "<p>Dear [referee-name],</p>\n" .
+        "<p>A match has been assigned to you. Below are the details:</p>\n" .
+        "<ul>" .
+        "<li><strong>Teams:</strong> [team-first-name] vs [team-second-name]</li>" .
+        "<li><strong>Date:</strong> [match-date]</li>" .
+        "<li><strong>Location:</strong> [match-location]</li>" .
+        "<li><strong>Week:</strong> [match-week]</li>" .
+        "</ul>\n" .
+        "<p>Please log in to your account to view the match and manage it.</p>\n" .
+        "<p>Regards,<br/>" . esc_html($site_name) . "</p>";
+}
+
+function your_plugin_get_referee_email_template()
+{
+    $tmpl = get_option(SOCCER_REFEREE_EMAIL_OPTION, '');
+    if (empty($tmpl)) {
+        $tmpl = your_plugin_default_referee_email_template();
+    }
+    return $tmpl;
+}
+
+function your_plugin_referee_email_menu()
+{
+    add_menu_page(
+        'Referee Email Configuration',
+        'Referee Email Configuration',
+        'manage_options',
+        'soccer-referee-email',
+        'your_plugin_referee_email_page_callback',
+        'dashicons-email',
+        56
+    );
+}
+add_action('admin_menu', 'your_plugin_referee_email_menu');
+
+function your_plugin_referee_email_page_callback()
+{
+    if (! current_user_can('manage_options')) {
+        return;
+    }
+
+    // Save on POST
+    if (isset($_POST['soccer_referee_email_template']) && check_admin_referer('soccer_referee_email_save', 'soccer_referee_email_nonce')) {
+        // Allow basic tags but strip dangerous content
+        $html = wp_kses_post(wp_unslash($_POST['soccer_referee_email_template']));
+        update_option(SOCCER_REFEREE_EMAIL_OPTION, $html);
+        echo '<div class="updated"><p>Template saved.</p></div>';
+    }
+
+    $template = your_plugin_get_referee_email_template();
+
+    // Variables list
+    $variables = array(
+        '[referee-name]' => 'Full name of the referee',
+        '[team-first-name]' => 'First team name (home)',
+        '[team-second-name]' => 'Second team name (away)',
+        '[match-date]' => 'Match date',
+        '[match-location]' => 'Match location',
+        '[match-week]' => 'Match week',
+    );
+
+    ?>
+    <div class="wrap">
+        <h1>Referee Email Configuration</h1>
+        <p>You can use the following variables in the template:</p>
+        <ul>
+            <?php foreach ($variables as $k => $v) : ?>
+                <li><code><?php echo esc_html($k); ?></code> — <?php echo esc_html($v); ?></li>
+            <?php endforeach; ?>
+        </ul>
+        <form method="post">
+            <?php wp_nonce_field('soccer_referee_email_save', 'soccer_referee_email_nonce'); ?>
+            <textarea name="soccer_referee_email_template" rows="12" cols="100" style="width:100%;max-width:1200px;"><?php echo esc_textarea($template); ?></textarea>
+            <p><input type="submit" class="button button-primary" value="Save Template"></p>
+        </form>
+    </div>
+    <?php
+}
+
