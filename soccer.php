@@ -1102,7 +1102,7 @@ function your_plugin_handle_create_match()
 
                 // Get saved template and replace variables
                 $template = your_plugin_get_referee_email_template();
-                $match_link = get_edit_post_link($post_id) ? get_edit_post_link($post_id) : admin_url('post.php?post=' . $post_id . '&action=edit');
+                $referee_dashboard_url = your_plugin_get_referee_dashboard_url();
                 $replacements = array(
                     '[referee-name]' => esc_html($display_name),
                     '[team-first-name]' => esc_html($team1_name),
@@ -1110,6 +1110,7 @@ function your_plugin_handle_create_match()
                     '[match-date]' => esc_html($match_date),
                     '[match-location]' => esc_html($match_location),
                     '[match-week]' => esc_html($match_week),
+                    '[match-link]' => esc_url($referee_dashboard_url),
                 );
 
                 $message = str_replace(array_keys($replacements), array_values($replacements), $template);
@@ -1629,6 +1630,34 @@ add_action('wp_enqueue_scripts', 'your_plugin_isolate_from_theme', 999);
 // Option name to store template
 define('SOCCER_REFEREE_EMAIL_OPTION', 'soccer_referee_email_template');
 
+// Function to get referee dashboard URL
+function your_plugin_get_referee_dashboard_url()
+{
+    // First, try to find a page with the start_match_shortcode
+    $pages = get_pages();
+    foreach ($pages as $page) {
+        if (has_shortcode($page->post_content, 'start_match_shortcode')) {
+            return get_permalink($page->ID);
+        }
+    }
+
+    // Fallback: try to find any published page (assuming the shortcode might be added later)
+    $args = array(
+        'post_type' => 'page',
+        'post_status' => 'publish',
+        'numberposts' => 1,
+        'orderby' => 'date',
+        'order' => 'DESC'
+    );
+    $pages = get_posts($args);
+    if (!empty($pages)) {
+        return get_permalink($pages[0]->ID);
+    }
+
+    // Last fallback: home URL
+    return home_url();
+}
+
 // Default HTML template (same content as originally sent)
 function your_plugin_default_referee_email_template()
 {
@@ -1641,7 +1670,7 @@ function your_plugin_default_referee_email_template()
         "<li><strong>Location:</strong> [match-location]</li>" .
         "<li><strong>Week:</strong> [match-week]</li>" .
         "</ul>\n" .
-        "<p>Please log in to your account to view the match and manage it.</p>\n" .
+        "<p>Please <a href=\"[match-link]\" style=\"color: #6366f1; text-decoration: none; font-weight: bold;\">click here to access your referee dashboard</a> to view the match and manage it.</p>\n" .
         "<p>Regards,<br/>" . esc_html($site_name) . "</p>";
 }
 
@@ -1692,6 +1721,7 @@ function your_plugin_referee_email_page_callback()
         '[match-date]' => 'Match date',
         '[match-location]' => 'Match location',
         '[match-week]' => 'Match week',
+        '[match-link]' => 'Link to referee dashboard',
     );
 
     ?>
