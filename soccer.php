@@ -447,15 +447,11 @@ add_action('init', 'your_plugin_register_match_cpt');
 // --- 4. AJAX Handler for Front-end Team Creation ---
 // Handles requests from logged-in users
 add_action('wp_ajax_your_plugin_create_team', 'your_plugin_handle_create_team');
-// Handles requests from non-logged-in users
-add_action('wp_ajax_nopriv_your_plugin_create_team', 'your_plugin_handle_create_team');
 
 function your_plugin_handle_create_team()
 {
-    // --- Security Check: Nonce Verification ---
-    // This is critical. If the nonce fails, no further processing should occur.
-    // The 'false' argument prevents wp_die() and allows us to send a JSON error response.
-    if (! check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false)) {
+    // --- Security Check: Nonce and Capability Verification ---
+    if (!check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false) || !current_user_can('administrator')) {
         wp_send_json_error(array('message' => 'Security check failed.'));
         return;
     }
@@ -785,11 +781,10 @@ function your_plugin_fetch_teams_handler()
 
 // --- AJAX Handler for Editing a Team ---
 add_action('wp_ajax_your_plugin_update_team', 'your_plugin_handle_update_team');
-add_action('wp_ajax_nopriv_your_plugin_update_team', 'your_plugin_handle_update_team');
 
 function your_plugin_handle_update_team()
 {
-    if (! check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false)) {
+    if (!check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false) || !current_user_can('administrator')) {
         wp_send_json_error(array('message' => __('Security check failed. Please try again.', YOUR_PLUGIN_SLUG)));
         return;
     }
@@ -919,11 +914,10 @@ function your_plugin_handle_update_team()
 
 // --- AJAX Handler for Deleting a Team ---
 add_action('wp_ajax_your_plugin_delete_team', 'your_plugin_handle_delete_team');
-add_action('wp_ajax_nopriv_your_plugin_delete_team', 'your_plugin_handle_delete_team');
 
 function your_plugin_handle_delete_team()
 {
-    if (! check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false)) {
+    if (!check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false) || !current_user_can('administrator')) {
         wp_send_json_error(array('message' => __('Security check failed. Please try again.', YOUR_PLUGIN_SLUG)));
         return;
     }
@@ -1040,11 +1034,10 @@ function your_plugin_fetch_referee_matches_handler()
 
 // --- AJAX Handler for Creating a Match ---
 add_action('wp_ajax_your_plugin_create_match', 'your_plugin_handle_create_match');
-add_action('wp_ajax_nopriv_your_plugin_create_match', 'your_plugin_handle_create_match');
 
 function your_plugin_handle_create_match()
 {
-    if (! check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false)) {
+    if (!check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false) || !current_user_can('administrator')) {
         wp_send_json_error(array('message' => __('Security check failed. Please try again.', YOUR_PLUGIN_SLUG)));
         return;
     }
@@ -1203,11 +1196,10 @@ function your_plugin_fetch_matches_handler()
 
 // --- AJAX Handler for Editing a Match ---
 add_action('wp_ajax_your_plugin_update_match', 'your_plugin_handle_update_match');
-add_action('wp_ajax_nopriv_your_plugin_update_match', 'your_plugin_handle_update_match');
 
 function your_plugin_handle_update_match()
 {
-    if (! check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false)) {
+    if (!check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false) || !current_user_can('administrator')) {
         wp_send_json_error(array('message' => __('Security check failed. Please try again.', YOUR_PLUGIN_SLUG)));
         return;
     }
@@ -1344,11 +1336,10 @@ function your_plugin_get_match_summary_handler()
 
 // --- AJAX Handler for Deleting a Match ---
 add_action('wp_ajax_your_plugin_delete_match', 'your_plugin_handle_delete_match');
-add_action('wp_ajax_nopriv_your_plugin_delete_match', 'your_plugin_handle_delete_match');
 
 function your_plugin_handle_delete_match()
 {
-    if (! check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false)) {
+    if (!check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false) || !current_user_can('administrator')) {
         wp_send_json_error(array('message' => __('Security check failed. Please try again.', YOUR_PLUGIN_SLUG)));
         return;
     }

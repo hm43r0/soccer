@@ -132,6 +132,7 @@ function your_plugin_fetch_referee_stats_handler() {
 
 // Create a referee user
 add_action('wp_ajax_your_plugin_create_referee', 'your_plugin_create_referee_handler');
+add_action('wp_ajax_nopriv_your_plugin_create_referee', 'your_plugin_unauthorized_access_handler');
 function your_plugin_create_referee_handler() {
     if ( ! your_plugin_require_admin_and_nonce() ) return;
 
@@ -196,6 +197,7 @@ function your_plugin_create_referee_handler() {
 
 // Update a referee user
 add_action('wp_ajax_your_plugin_update_referee', 'your_plugin_update_referee_handler');
+add_action('wp_ajax_nopriv_your_plugin_update_referee', 'your_plugin_unauthorized_access_handler');
 function your_plugin_update_referee_handler() {
     if ( ! your_plugin_require_admin_and_nonce() ) return;
 
@@ -244,6 +246,7 @@ function your_plugin_update_referee_handler() {
 
 // Delete a referee user
 add_action('wp_ajax_your_plugin_delete_referee', 'your_plugin_delete_referee_handler');
+add_action('wp_ajax_nopriv_your_plugin_delete_referee', 'your_plugin_unauthorized_access_handler');
 function your_plugin_delete_referee_handler() {
     if ( ! your_plugin_require_admin_and_nonce() ) return;
 
@@ -263,4 +266,8 @@ function your_plugin_delete_referee_handler() {
         return;
     }
     wp_send_json_success(array('message' => __('Referee deleted.', 'your-awesome-admin-dashboard')));
+}
+
+function your_plugin_unauthorized_access_handler() {
+    wp_send_json_error( array( 'message' => __( 'Unauthorized access.', 'your-awesome-admin-dashboard' ) ) );
 }
