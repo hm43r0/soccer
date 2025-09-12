@@ -253,20 +253,32 @@
     }
 
     /* Responsive adjustments */
-    @media (max-width: 1024px) {
+  @media (max-width: 1023px) {
       .sidebar {
         transform: translateX(-100%);
         /* Hidden by default on tablet and mobile */
         transition: transform 0.3s ease-in-out;
         position: fixed;
         /* Position fixed for overlay effect */
-        z-index: 50;
+        top: 0;
+        left: 0;
+        max-height: 100vh;
+        overflow-y: auto;
+        z-index: 60;
         /* Ensure it's above other content */
+        box-shadow: 2px 0 12px rgba(0,0,0,0.4);
+        /* make it fully hidden and non-interactive until activated */
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
       }
 
       .sidebar.active {
         transform: translateX(0);
         /* Show when active */
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
       }
 
       .sidebar-overlay {
@@ -275,13 +287,19 @@
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.5);
-        z-index: 40;
+        z-index: 50;
         /* Below sidebar, above main content */
       }
 
       .sidebar-overlay.active {
         display: block;
         /* Show when sidebar is active */
+      }
+
+      /* Utility to disable body scroll when sidebar is open */
+      body.no-scroll {
+        overflow: hidden !important;
+        height: 100vh; /* prevent touch scroll on mobile */
       }
 
       .main-content {
@@ -327,7 +345,7 @@
       }
     }
 
-    @media (min-width: 1025px) {
+  @media (min-width: 1024px) {
 
       /* Ensure mobile menu icon is hidden on larger screens */
       .mobile-menu-icon {
@@ -426,7 +444,7 @@
       border-color: #ef4444;
     }
 
-    @media (max-width: 1024px) {
+  @media (max-width: 1023px) {
       .form-and-list-grid {
         grid-template-columns: repeat(1, minmax(0, 1fr));
         /* Stack form and list on medium screens */
@@ -501,7 +519,7 @@
     }
 
     /* Adjusting the layout for the match details view on larger screens */
-    @media (min-width: 1024px) {
+  @media (min-width: 1024px) {
       #matchesContent>div:first-child {
         /* Match Stats */
         grid-template-columns: repeat(1, minmax(0, 1fr)) repeat(2,
@@ -570,7 +588,7 @@
 
   <div class="flex">
     <!-- Sidebar -->
-    <div id="sidebar" class="sidebar h-screen w-64 glassmorphism border-r border-white/10 flex-shrink-0 overflow-y-auto">
+  <div id="sidebar" class="sidebar min-h-screen w-64 glassmorphism border-r border-white/10 flex-shrink-0 overflow-y-auto">
       <div class="p-6">
         <div class="mb-8 flex flex-col items-center">
           <a href="https://soccer6league.com" target="_blank" rel="noopener noreferrer" class="flex items-center w-20 h-20 mb-4 transition-transform hover:scale-105">
@@ -630,7 +648,8 @@
       </header>
 
       <!-- Dashboard Content -->
-      <div class="p-6">
+       <!-- for tab pe-0  -->
+      <div class="pe-4 md:pe-0 lg:p-4">
         <!-- Teams Content Section -->
         <div id="teamsContent" class="space-y-8">
           <!-- Stats Cards -->
@@ -1396,11 +1415,13 @@
         populatePlayersFilterOptions();
       }
 
-      // Close sidebar on mobile/tablet after clicking a tab
-      if (window.innerWidth <= 1024) {
+  // Close sidebar on mobile/tablet after clicking a tab
+  if (window.innerWidth <= 1023) {
         sidebar.classList.remove("active");
         const overlay = document.getElementById("sidebarOverlay");
         if (overlay) overlay.classList.remove("active");
+        // Restore body scroll when sidebar is closed via tab selection
+        document.body.classList.remove('no-scroll');
       }
     }
 
@@ -1415,14 +1436,17 @@
 
     // Event listener for the mobile menu button
     mobileMenuButton.addEventListener("click", () => {
-      sidebar.classList.toggle("active");
+      const isActive = sidebar.classList.toggle("active");
       let overlay = document.getElementById("sidebarOverlay");
       if (!overlay) {
         overlay = document.createElement("div");
         overlay.id = "sidebarOverlay";
+        overlay.className = 'sidebar-overlay';
         document.body.appendChild(overlay);
       }
-      overlay.classList.toggle("active");
+      overlay.classList.toggle("active", isActive);
+      // Toggle body scrolling
+      document.body.classList.toggle('no-scroll', isActive);
     });
 
     // Close sidebar and overlay when clicking outside of it
@@ -1435,6 +1459,8 @@
       ) {
         sidebar.classList.remove("active");
         if (overlay) overlay.classList.remove("active");
+        // Ensure body scroll is restored
+        document.body.classList.remove('no-scroll');
       }
     });
 
