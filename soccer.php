@@ -145,26 +145,7 @@ function your_plugin_get_scoped_styles()
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
     }
     
-    /* Button styles */
-    .soccer-plugin-container .btn,
-    .soccer-plugin-container button {
-        background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 12px 24px !important;
-        font-weight: 600 !important;
-        cursor: pointer !important;
-        transition: all 0.3s ease !important;
-        text-decoration: none !important;
-        display: inline-block !important;
-    }
     
-    .soccer-plugin-container .btn:hover,
-    .soccer-plugin-container button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3) !important;
-    }
     
     /* Table styles */
     .soccer-plugin-container table {
@@ -1537,28 +1518,6 @@ function your_plugin_isolate_from_theme()
         outline: none !important;
         border-color: #6366f1 !important;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
-    }
-    
-    /* Button isolation */
-    .soccer-plugin-container .btn,
-    .soccer-plugin-container button {
-        background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 12px 24px !important;
-        font-weight: 600 !important;
-        cursor: pointer !important;
-        transition: all 0.3s ease !important;
-        text-decoration: none !important;
-        display: inline-block !important;
-        font-family: 'Inter', sans-serif !important;
-    }
-    
-    .soccer-plugin-container .btn:hover,
-    .soccer-plugin-container button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3) !important;
     }
     
     /* Table isolation */
