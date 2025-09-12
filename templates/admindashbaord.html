@@ -291,11 +291,6 @@
         /* Below sidebar, above main content */
       }
 
-      .sidebar-overlay.active {
-        display: block;
-        /* Show when sidebar is active */
-      }
-
       /* Utility to disable body scroll when sidebar is open */
       body.no-scroll {
         overflow: hidden !important;
@@ -552,6 +547,14 @@
         /* Provides space between the stacked cards */
       }
     }
+	  
+	  @media only screen and (max-width: 768px) {
+		  .fl-module-content,
+		  .fl-module:where(.fl-module:not(:has(> .fl-module-content))) {
+			margin: 5px !important;
+		  }
+		}
+
 
     @media (min-width: 769px) and (max-width: 1023px) {
       #matchesContent>div:nth-child(2) {
@@ -594,9 +597,7 @@
           <a href="https://soccer6league.com" target="_blank" rel="noopener noreferrer" class="flex items-center w-20 h-20 mb-4 transition-transform hover:scale-105">
             <img src="https://soccer6league.com/wp-content/uploads/2024/10/soccer-6-wgreen-300x237.png"
               alt="Soccer6 League" class="w-full h-full object-contain drop-shadow-lg" />
-          </a>
-          <h3 class="text-lg font-semibold text-white mb-2">Soccer6 League</h3>
-          <p class="text-xs text-gray-400 text-center">Management Dashboard</p>
+          </a>    
         </div>
 
         <nav class="space-y-1">
