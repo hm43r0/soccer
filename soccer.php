@@ -545,7 +545,10 @@ function your_plugin_handle_create_team()
     $valid_players = [];
     foreach ($players_data as $player) {
         // Ensure 'id' and 'name' are set, not empty after trimming whitespace.
-        if (isset($player['id']) && isset($player['name']) && ! empty(trim($player['id'])) && ! empty(trim($player['name']))) {
+        // Allow ID 0 as a valid value for goalkeepers
+        if (isset($player['id']) && isset($player['name']) &&
+            (is_numeric($player['id']) || !empty(trim($player['id']))) &&
+            !empty(trim($player['name']))) {
             $valid_players[] = [
                 'id'   => sanitize_text_field(trim($player['id'])),
                 'name' => sanitize_text_field(trim($player['name'])),
@@ -835,7 +838,9 @@ function your_plugin_handle_update_team()
     }
     $valid_players = [];
     foreach ($players_data as $player) {
-        if (isset($player['id']) && isset($player['name']) && ! empty(trim($player['id'])) && ! empty(trim($player['name']))) {
+        if (isset($player['id']) && isset($player['name']) &&
+            (is_numeric($player['id']) || !empty(trim($player['id']))) &&
+            !empty(trim($player['name']))) {
             $valid_players[] = [
                 'id'   => sanitize_text_field(trim($player['id'])),
                 'name' => sanitize_text_field(trim($player['name'])),
