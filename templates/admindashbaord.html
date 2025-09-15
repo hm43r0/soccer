@@ -15,6 +15,9 @@
             primary: "#6366f1",
             secondary: "#8b5cf6",
           },
+          zIndex: {
+            '100000': '100000',
+          },
         },
       },
     };
@@ -569,6 +572,167 @@
     .player-events-table {
       overflow-x: auto;
     }
+
+    /* Match Report Popup Styles */
+    #matchReportPopup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #matchReportPopup.show {
+      display: flex;
+    }
+
+    .match-report-modal {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      max-width: 800px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .match-report-header {
+      padding: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .match-report-header h2 {
+      color: white;
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .match-report-close {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .match-report-close:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .match-report-content {
+      padding: 24px;
+      color: white;
+    }
+
+    .match-report-section {
+      margin-bottom: 24px;
+    }
+
+    .match-report-section h3 {
+      color: #6366f1;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    .match-report-section h3 i {
+      margin-right: 8px;
+    }
+
+    .match-report-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .match-report-item {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .match-report-item-label {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .match-report-item-value {
+      color: white;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .match-report-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+    }
+
+    .match-report-stat {
+      text-align: center;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+
+    .match-report-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #10b981;
+      margin-bottom: 4px;
+    }
+
+    .match-report-stat-label {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 640px) {
+      .match-report-modal {
+        width: 95%;
+        margin: 20px;
+      }
+
+      .match-report-header {
+        padding: 16px;
+      }
+
+      .match-report-content {
+        padding: 16px;
+      }
+
+      .match-report-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .match-report-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
   </style>
 </head>
 
@@ -611,6 +775,12 @@
             class="sidebar-item flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg">
             <i class="fas fa-calendar-alt w-5 h-5"></i>
             <span>Matches</span>
+          </a>
+          <!-- New Completed Matches Tab -->
+          <a href="#" id="completedMatchesTab" data-tab="completedMatches"
+            class="sidebar-item flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg">
+            <i class="fas fa-check-circle w-5 h-5"></i>
+            <span>Completed Matches</span>
           </a>
           <!-- New Referees Tab -->
           <a href="#" id="refereesTab" data-tab="referees"
@@ -1027,6 +1197,108 @@
           </div>
         </div>
 
+        <!-- Completed Matches Content Section -->
+        <div id="completedMatchesContent" class="space-y-8 hidden">
+          <!-- Completed Matches Stats Cards -->
+          <div class="stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div class="card-hover glassmorphism rounded-2xl p-6 border border-white/10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-400 text-sm">Total Completed Matches</p>
+                  <p class="text-3xl font-bold text-white" id="totalCompletedMatches">
+                    0
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-hover glassmorphism rounded-2xl p-6 border border-white/10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-400 text-sm">Total Goals Scored</p>
+                  <p class="text-3xl font-bold text-white" id="totalGoalsScored">
+                    0
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-futbol text-blue-400 text-xl"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-hover glassmorphism rounded-2xl p-6 border border-white/10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-400 text-sm">Total Cards Issued</p>
+                  <p class="text-3xl font-bold text-white" id="totalCardsIssued">
+                    0
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Completed Matches Filters -->
+          <div class="card-hover glassmorphism rounded-2xl p-8 border border-white/10">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-2xl font-bold text-white flex items-center">
+                <i class="fas fa-filter mr-3 text-purple-400"></i>
+                Filters
+              </h3>
+              <button id="completedMatchesFilterToggle" type="button"
+                class="text-purple-400 hover:text-purple-300 transition-colors">
+                <i class="fas fa-chevron-down"></i>
+              </button>
+            </div>
+
+            <!-- Completed Matches Filters Panel -->
+            <div id="completedMatchesFilters" class="hidden mb-6">
+              <div class="glassmorphism rounded-2xl p-4 border border-white/10">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
+                  <div class="lg:col-span-2">
+                    <label class="text-xs text-gray-300 block mb-1">Search Teams</label>
+                    <input type="text" id="filterCompletedMatchSearch" placeholder="Search by team name..." class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                  </div>
+
+                  <div>
+                    <label class="text-xs text-gray-300 block mb-1">From Date</label>
+                    <input type="date" id="filterCompletedMatchDateFrom" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                  </div>
+
+                  <div>
+                    <label class="text-xs text-gray-300 block mb-1">To Date</label>
+                    <input type="date" id="filterCompletedMatchDateTo" class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                  </div>
+                </div>
+
+                <div class="mt-4 flex justify-end">
+                  <button id="clearCompletedMatchFilters" class="px-4 py-2 bg-green-700/30 text-white rounded-lg hover:bg-green-700 transition">Clear Filters</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Completed Matches List -->
+          <div class="card-hover glassmorphism rounded-2xl p-8 border border-white/10">
+            <div id="completedMatchesList" class="space-y-4 max-h-[800px] overflow-y-auto">
+              <!-- Completed matches will be loaded here -->
+              <div class="text-center py-12 text-gray-400">
+                <i class="fas fa-inbox w-16 h-16 mx-auto mb-4 opacity-50 text-6xl"></i>
+                <p class="text-lg">No completed matches yet</p>
+                <p class="text-sm">
+                  Completed matches will appear here once referees finish reporting
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Referees Content Section -->
         <div id="refereesContent" class="space-y-8 hidden">
           <!-- Referee Stats Cards -->
@@ -1280,6 +1552,7 @@
     const sidebarLinks = document.querySelectorAll(".sidebar-item");
     const teamsContent = document.getElementById("teamsContent");
     const matchesContent = document.getElementById("matchesContent");
+    const completedMatchesContent = document.getElementById("completedMatchesContent");
     const pageTitle = document.getElementById("pageTitle");
     const pageDescription = document.getElementById("pageDescription");
     // Referees DOM
@@ -1365,6 +1638,7 @@
       // Hide all content sections
       teamsContent.classList.add("hidden");
       matchesContent.classList.add("hidden");
+      completedMatchesContent.classList.add("hidden");
       refereesContent.classList.add("hidden");
       playersContent.classList.add("hidden");
 
@@ -1399,6 +1673,20 @@
         // Ensure create match form is visible when matches tab is selected
         matchesFormGrid.classList.remove("hidden");
         matchDetailsView.classList.add("hidden");
+      } else if (tabName === "completedMatches") {
+        completedMatchesContent.classList.remove("hidden");
+        document.getElementById("completedMatchesTab").classList.add("active");
+        pageTitle.textContent = "Completed Matches";
+        pageDescription.textContent = "View and analyze completed match reports";
+        fetchCompletedMatches();
+        // Auto-expand filters for completed matches (match referee dashboard behavior)
+        const cmFilters = document.getElementById('completedMatchesFilters');
+        const cmToggle = document.getElementById('completedMatchesFilterToggle');
+        if (cmFilters && cmFilters.classList.contains('hidden')) cmFilters.classList.remove('hidden');
+        if (cmToggle) {
+          const icon = cmToggle.querySelector('i');
+          if (icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+        }
       } else if (tabName === "referees") {
         refereesContent.classList.remove("hidden");
         document.getElementById("refereesTab").classList.add("active");
@@ -1466,6 +1754,267 @@
 
     // Initial tab display (default to teams)
     showTab("teams");
+
+    // --- Completed Matches Management Logic ---
+    let completedMatchesData = [];
+
+    function fetchCompletedMatches() {
+      jQuery.ajax({
+        url: your_plugin_ajax_object.ajax_url,
+        type: 'POST',
+        data: {
+          action: 'your_plugin_fetch_completed_matches',
+          nonce: your_plugin_ajax_object.nonce
+        },
+        success: function (response) {
+          if (response.success) {
+            completedMatchesData = response.data.matches || [];
+            updateCompletedMatchesStats(response.data.stats || {});
+            renderCompletedMatches();
+          } else {
+            showNotification('Failed to load completed matches.', 'error');
+          }
+        },
+        error: function () {
+          showNotification('Failed to load completed matches.', 'error');
+        }
+      });
+    }
+
+    function updateCompletedMatchesStats(stats) {
+      document.getElementById("totalCompletedMatches").textContent = stats.total_completed_matches || 0;
+      document.getElementById("totalGoalsScored").textContent = stats.total_goals || 0;
+      document.getElementById("totalCardsIssued").textContent = stats.total_cards || 0;
+    }
+
+    function renderCompletedMatches() {
+      const container = document.getElementById("completedMatchesList");
+      if (!completedMatchesData || completedMatchesData.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12 text-gray-400">
+                <i class="fas fa-inbox w-16 h-16 mx-auto mb-4 opacity-50 text-6xl"></i>
+                <p class="text-lg">No completed matches yet</p>
+                <p class="text-sm">Completed matches will appear here once referees finish reporting</p>
+            </div>
+        `;
+        return;
+      }
+
+      // Apply filters
+      const filteredMatches = applyCompletedMatchesFilters();
+
+      if (filteredMatches.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-400">
+                <p>No matches match the current filters</p>
+            </div>
+        `;
+        return;
+      }
+
+      // Render as a single-row list item (jerseys left, info center, action right)
+      container.innerHTML = filteredMatches
+        .map((match) => {
+          const team1Name = getTeamNameById(match.team1Id);
+          const team2Name = getTeamNameById(match.team2Id);
+          const team1Jersey = getTeamJerseyById(match.team1Id);
+          const team2Jersey = getTeamJerseyById(match.team2Id);
+          return `
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-300 group relative">
+              <div class="flex items-center gap-4">
+                <!-- Jerseys (left) -->
+                <div class="flex items-center gap-3 w-48">
+                  <img src="${team1Jersey}" alt="${team1Name} Jersey" class="w-12 h-12 rounded-full object-cover border-2 border-white/20">
+                  <span class="text-white font-semibold">vs</span>
+                  <img src="${team2Jersey}" alt="${team2Name} Jersey" class="w-12 h-12 rounded-full object-cover border-2 border-white/20">
+                </div>
+
+                <!-- Match info (center) -->
+                <div class="flex-1 text-center">
+                  <h4 class="text-lg font-semibold text-white">${team1Name} vs ${team2Name}</h4>
+                  <div class="flex items-center justify-center gap-4 text-sm text-gray-400 mt-1">
+                    <span class="flex items-center">
+                      <i class="fas fa-calendar mr-1 text-purple-400"></i>
+                      ${match.date}
+                    </span>
+                    <span class="flex items-center">
+                      <i class="fas fa-map-marker-alt mr-1 text-blue-400"></i>
+                      ${match.location || 'N/A'}
+                    </span>
+                    <span class="flex items-center">
+                      <i class="fas fa-clock mr-1 text-yellow-400"></i>
+                      Week ${match.week || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Action (right) -->
+                <div class="w-40 flex justify-end">
+                  <button class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-blue-800 transition-all view-score-btn" onclick="viewMatchReport(${match.id})">View Score</button>
+                </div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    function applyCompletedMatchesFilters() {
+      if (!completedMatchesData) {
+        return [];
+      }
+
+      const filters = {
+        status: document.getElementById('filterCompletedMatchStatus')?.value || '',
+        dateFrom: document.getElementById('filterCompletedMatchDateFrom')?.value || '',
+        dateTo: document.getElementById('filterCompletedMatchDateTo')?.value || '',
+        search: (document.getElementById('filterCompletedMatchSearch')?.value || '').trim().toLowerCase()
+      };
+
+      const filteredResults = completedMatchesData.filter(match => {
+        // Status filter
+        if (filters.status && match.status !== filters.status) {
+          return false;
+        }
+
+        // Date range filter
+        if (filters.dateFrom || filters.dateTo) {
+          const matchDate = new Date(match.date);
+          if (filters.dateFrom) {
+            const fromDate = new Date(filters.dateFrom);
+            if (matchDate < fromDate) {
+              return false;
+            }
+          }
+          if (filters.dateTo) {
+            const toDate = new Date(filters.dateTo);
+            if (matchDate > toDate) {
+              return false;
+            }
+          }
+        }
+        // Search filter (by team name)
+        if (filters.search) {
+          const t1 = (getTeamNameById(match.team1Id) || '').toLowerCase();
+          const t2 = (getTeamNameById(match.team2Id) || '').toLowerCase();
+          if (!t1.includes(filters.search) && !t2.includes(filters.search)) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      return filteredResults;
+    }
+
+    function viewMatchReport(matchId) {
+      // Open match report in a modal
+      const match = completedMatchesData.find(m => m.id == matchId);
+      if (match) {
+        // Populate modal with match data
+        document.getElementById('matchReportTitle').textContent = 'Match Report';
+        document.getElementById('matchReportTeams').textContent = `${getTeamNameById(match.team1Id)} vs ${getTeamNameById(match.team2Id)}`;
+        document.getElementById('matchReportDate').textContent = match.date || '-';
+        document.getElementById('matchReportLocation').textContent = match.location || '-';
+        document.getElementById('matchReportReferee').textContent = match.referee || '-';
+        document.getElementById('matchReportScore').textContent = match.final_score || '-';
+        document.getElementById('matchReportWeek').textContent = match.week || '-';
+
+        // Statistics
+        document.getElementById('matchReportGoals').textContent = match.total_goals || 0;
+        document.getElementById('matchReportCards').textContent = match.total_cards || 0;
+        document.getElementById('matchReportFouls').textContent = match.total_fouls || 0;
+
+        // Additional information
+        const cautionDescEl = document.querySelector('#matchReportCautionDesc .match-report-item-value');
+        const additionalNotesEl = document.querySelector('#matchReportAdditionalNotes .match-report-item-value');
+
+        cautionDescEl.textContent = match.caution_desc || '-';
+        additionalNotesEl.textContent = match.additional_notes || '-';
+
+        // Show the modal
+        document.getElementById('matchReportPopup').classList.add('show');
+      }
+    }
+
+    // Function to close the match report popup
+    function closeMatchReportPopup() {
+      document.getElementById('matchReportPopup').classList.remove('show');
+    }
+
+    // Event listener for popup close button (guarded in case script runs before DOM is ready)
+    (function(){
+      const matchReportCloseBtn = document.getElementById('matchReportCloseBtn');
+      if (matchReportCloseBtn) {
+        matchReportCloseBtn.addEventListener('click', closeMatchReportPopup);
+      }
+
+      // Close popup when clicking outside the modal (guarded)
+      const matchReportPopupEl = document.getElementById('matchReportPopup');
+      if (matchReportPopupEl) {
+        matchReportPopupEl.addEventListener('click', function(e) {
+          if (e.target === this) {
+            closeMatchReportPopup();
+          }
+        });
+      }
+    })();
+
+    // Completed Matches filter toggle and event listeners
+    const completedMatchesFilterToggle = document.getElementById('completedMatchesFilterToggle');
+    const completedMatchesFilters = document.getElementById('completedMatchesFilters');
+    const refreshCompletedMatchesBtn = document.getElementById('refreshCompletedMatchesBtn');
+
+    if (completedMatchesFilterToggle && completedMatchesFilters) {
+      completedMatchesFilterToggle.addEventListener('click', function () {
+        completedMatchesFilters.classList.toggle('hidden');
+        const icon = this.querySelector('i');
+        if (icon) {
+          icon.classList.toggle('fa-chevron-down');
+          icon.classList.toggle('fa-chevron-up');
+        }
+      });
+
+      // Add event listeners to filter elements
+      ['filterCompletedMatchStatus', 'filterCompletedMatchDateFrom', 'filterCompletedMatchDateTo'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.addEventListener('change', renderCompletedMatches);
+        }
+      });
+
+      // Search input - trigger render on input (debounced simple)
+      const searchInput = document.getElementById('filterCompletedMatchSearch');
+      if (searchInput) {
+        let searchTimeout = null;
+        searchInput.addEventListener('input', function () {
+          if (searchTimeout) clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(() => {
+            renderCompletedMatches();
+          }, 250);
+        });
+      }
+
+      // Clear filters button
+      const clearBtn = document.getElementById('clearCompletedMatchFilters');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+          // Reset filter inputs
+          const statusEl = document.getElementById('filterCompletedMatchStatus'); if (statusEl) statusEl.value = '';
+          const dateFromEl = document.getElementById('filterCompletedMatchDateFrom'); if (dateFromEl) dateFromEl.value = '';
+          const dateToEl = document.getElementById('filterCompletedMatchDateTo'); if (dateToEl) dateToEl.value = '';
+          const searchEl = document.getElementById('filterCompletedMatchSearch'); if (searchEl) searchEl.value = '';
+          renderCompletedMatches();
+        });
+      }
+    }
+
+    if (refreshCompletedMatchesBtn) {
+      refreshCompletedMatchesBtn.addEventListener('click', function () {
+        fetchCompletedMatches();
+      });
+    }
 
     // --- Referees Management Logic ---
     function resetRefereeForm() {
@@ -2074,6 +2623,12 @@
       // Ensure teamId is treated as a number for comparison
       const team = teams.find((t) => t.id === parseInt(teamId));
       return team ? team.name : "Unknown Team";
+    }
+
+    // Helper to get team jersey image URL by ID (falls back to placeholder)
+    function getTeamJerseyById(teamId) {
+      const team = teams.find((t) => t.id === parseInt(teamId));
+      return team && team.jersey_image_url ? team.jersey_image_url : 'https://via.placeholder.com/80';
     }
 
     // Match Form Submission Handler
@@ -3006,7 +3561,7 @@
     // Notification system
     function showNotification(message, type = "success") {
       const notification = document.createElement("div");
-      notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 transform translate-x-full transition-transform duration-300 ${type === "success"
+      notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-100000 transform translate-x-full transition-transform duration-300 ${type === "success"
           ? "bg-green-500"
           : type === "error"
             ? "bg-red-500"
@@ -3223,6 +3778,22 @@
       });
     });
 
+    // Ensure match report popup listeners are attached after DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+      const matchReportCloseBtn = document.getElementById('matchReportCloseBtn');
+      if (matchReportCloseBtn) {
+        matchReportCloseBtn.addEventListener('click', closeMatchReportPopup);
+      }
+      const matchReportPopupEl = document.getElementById('matchReportPopup');
+      if (matchReportPopupEl) {
+        matchReportPopupEl.addEventListener('click', function (e) {
+          if (e.target === this) {
+            closeMatchReportPopup();
+          }
+        });
+      }
+    });
+
     // Event listener for jersey image preview
     teamJerseyImageInput.addEventListener("change", function () {
       if (this.files && this.files[0]) {
@@ -3354,6 +3925,81 @@
       updateSelect(team2Select);
     }
   </script>
+
+  <!-- Match Report Popup Modal -->
+  <div id="matchReportPopup" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div class="match-report-modal">
+      <div class="match-report-header">
+        <h2 id="matchReportTitle">Match Report</h2>
+        <button id="matchReportCloseBtn" class="match-report-close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="match-report-content">
+        <div class="match-report-section">
+          <h3><i class="fas fa-info-circle"></i>Match Information</h3>
+          <div class="match-report-grid">
+            <div class="match-report-item">
+              <div class="match-report-item-label">Teams</div>
+              <div class="match-report-item-value" id="matchReportTeams">-</div>
+            </div>
+            <div class="match-report-item">
+              <div class="match-report-item-label">Date</div>
+              <div class="match-report-item-value" id="matchReportDate">-</div>
+            </div>
+            <div class="match-report-item">
+              <div class="match-report-item-label">Location</div>
+              <div class="match-report-item-value" id="matchReportLocation">-</div>
+            </div>
+            <div class="match-report-item">
+              <div class="match-report-item-label">Referee</div>
+              <div class="match-report-item-value" id="matchReportReferee">-</div>
+            </div>
+            <div class="match-report-item">
+              <div class="match-report-item-label">Final Score</div>
+              <div class="match-report-item-value" id="matchReportScore">-</div>
+            </div>
+            <div class="match-report-item">
+              <div class="match-report-item-label">Week</div>
+              <div class="match-report-item-value" id="matchReportWeek">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="match-report-section">
+          <h3><i class="fas fa-chart-bar"></i>Match Statistics</h3>
+          <div class="match-report-stats">
+            <div class="match-report-stat">
+              <div class="match-report-stat-value" id="matchReportGoals">0</div>
+              <div class="match-report-stat-label">Goals</div>
+            </div>
+            <div class="match-report-stat">
+              <div class="match-report-stat-value" id="matchReportCards">0</div>
+              <div class="match-report-stat-label">Cards</div>
+            </div>
+            <div class="match-report-stat">
+              <div class="match-report-stat-value" id="matchReportFouls">0</div>
+              <div class="match-report-stat-label">Fouls</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="match-report-section" id="matchReportNotesSection">
+          <h3><i class="fas fa-sticky-note"></i>Additional Information</h3>
+          <div class="space-y-4">
+            <div id="matchReportCautionDesc">
+              <div class="match-report-item-label">Caution Descriptions</div>
+              <div class="match-report-item-value">-</div>
+            </div>
+            <div id="matchReportAdditionalNotes">
+              <div class="match-report-item-label">Additional Notes</div>
+              <div class="match-report-item-value">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>

@@ -948,6 +948,9 @@ require_once plugin_dir_path(__FILE__) . 'inc/fetch-referees.php';
 // Include players AJAX handler
 require_once plugin_dir_path(__FILE__) . 'inc/fetch-players.php';
 
+// Include completed matches AJAX handler
+require_once plugin_dir_path(__FILE__) . 'inc/fetch-completed-matches.php';
+
 // --- AJAX Handler for Fetching Referee Matches ---
 add_action('wp_ajax_your_plugin_fetch_referee_matches', 'your_plugin_fetch_referee_matches_handler');
 add_action('wp_ajax_nopriv_your_plugin_fetch_referee_matches', 'your_plugin_fetch_referee_matches_handler');

@@ -1089,7 +1089,7 @@
             }
             
             // Hide dashboard and show match interface
-            $("#referee-matches-list, #referee-stat-cards").addClass("hidden");
+            $("#referee-matches-list, #referee-stat-cards, #referee-filters").addClass("hidden");
             $("#admin-start-match-root").removeClass("hidden");
             
             // Render the match interface with saved data
@@ -1431,7 +1431,7 @@
           closeAttendancePopup(false); // don't reset state when proceeding
           
           // Now proceed with the original match start logic
-          $("#referee-matches-list, #referee-stat-cards").addClass("hidden");
+          $("#referee-matches-list, #referee-stat-cards, #referee-filters").addClass("hidden");
           $("#admin-start-match-root").removeClass("hidden");
           renderAdminStartMatch(matchIdToStart);
         }
@@ -2693,7 +2693,7 @@
                     showMessage("Match summary saved!", "success");
                     loadRefereeMatches();
                     $("#admin-start-match-root").addClass("hidden").html("");
-                    $("#referee-matches-list, #referee-stat-cards").removeClass(
+                    $("#referee-matches-list, #referee-stat-cards, #referee-filters").removeClass(
                       "hidden"
                     );
                 } else {
@@ -2885,7 +2885,7 @@
               : type === "success"
               ? "bg-green-500/80"
               : "bg-blue-500/80";
-          const messageHtml = `<div class="fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 ${alertClass}" role="alert">
+          const messageHtml = `<div class="fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-100000 ${alertClass}" role="alert">
                                 <span class="block sm:inline">${message}</span>
                             </div>`;
           const $message = $(messageHtml).appendTo("body");
