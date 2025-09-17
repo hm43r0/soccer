@@ -1608,7 +1608,6 @@ function your_plugin_isolate_from_theme()
         backdrop-filter: blur(20px) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 16px !important;
-        padding: 24px !important;
         margin: 16px 0 !important;
     }
     

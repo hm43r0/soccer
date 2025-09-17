@@ -2929,6 +2929,20 @@
         // Initial load
         loadRefereeMatches();
       });
+		
+		document.addEventListener("DOMContentLoaded", function () {
+  const header = document.querySelector(".fl-builder-content.fl-builder-content-6204");
+  const headerHeight = header.offsetHeight;
+
+  window.addEventListener("scroll", function () {
+    if (window.scrollY > headerHeight) {
+      header.style.display = "none"; // hide header
+    } else {
+      header.style.display = "block"; // show header again
+    }
+  });
+});
+
     </script>
   </body>
 </html>
