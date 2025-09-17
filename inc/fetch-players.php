@@ -1,19 +1,4 @@
 <?php
-// Security helper for admin-only actions (reused from fetch-referees.php)
-if (!function_exists('your_plugin_require_admin_and_nonce')) {
-    function your_plugin_require_admin_and_nonce() {
-        if ( ! check_ajax_referer( 'your_plugin_ajax_nonce', 'nonce', false ) ) {
-            wp_send_json_error( array( 'message' => __( 'Security check failed.', 'your-awesome-admin-dashboard' ) ) );
-            return false;
-        }
-        if ( ! current_user_can( 'administrator' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Unauthorized.', 'your-awesome-admin-dashboard' ) ) );
-            return false;
-        }
-        return true;
-    }
-}
-
 // AJAX Handler for fetching player statistics
 add_action('wp_ajax_your_plugin_fetch_players_stats', 'your_plugin_fetch_players_stats_handler');
 add_action('wp_ajax_nopriv_your_plugin_fetch_players_stats', 'your_plugin_fetch_players_stats_handler');
@@ -59,30 +44,25 @@ function your_plugin_fetch_players_stats_handler() {
                             $player_id = strval($player['id']); // Ensure consistent string format
                             $player_name = trim($player['name']);
 
-                            // Skip players with empty names or IDs
-                            if (empty($player_id) || empty($player_name)) {
+                            // Skip players with empty names or IDs (but allow ID "0")
+                            if ((empty($player_id) && $player_id !== "0") || empty($player_name)) {
                                 continue;
                             }
 
-                            // Initialize player stats or update team info if player exists
-                            if (!isset($all_players[$player_id])) {
-                                $all_players[$player_id] = array(
-                                    'player_id' => $player_id,
-                                    'name' => $player_name,
-                                    'team_id' => $team_id,
-                                    'team_name' => $team_name,
-                                    'teams' => array($team_id => $team_name), // Track all teams
-                                    'games_played' => 0,
-                                    'goals' => 0,
-                                    'blue_cards' => 0,
-                                    'yellow_cards' => 0,
-                                    'red_cards' => 0,
-                                    'injuries' => 0, // We'll implement this when injury tracking is added
-                                );
-                            } else {
-                                // Player exists, add this team to their team list
-                                $all_players[$player_id]['teams'][$team_id] = $team_name;
-                            }
+                            // Create a new player entry for each player (no deduplication by ID)
+                            $all_players[] = array(
+                                'player_id' => $player_id,
+                                'name' => $player_name,
+                                'team_id' => intval($team_id),
+                                'team_name' => $team_name,
+                                'teams' => array($team_id => $team_name), // Track all teams (for future multi-team support)
+                                'games_played' => 0,
+                                'goals' => 0,
+                                'blue_cards' => 0,
+                                'yellow_cards' => 0,
+                                'red_cards' => 0,
+                                'injuries' => 0, // We'll implement this when injury tracking is added
+                            );
                         }
                     }
                 }
@@ -105,18 +85,30 @@ function your_plugin_fetch_players_stats_handler() {
             
             // Only count games played for completed matches
             $is_completed = get_post_meta($match_id, 'is_completed', true);
+            error_log("Match $match_id: is_completed = '$is_completed'");
             if ($is_completed !== '1') {
                 error_log("Match $match_id: Skipping incomplete match for games played calculation");
                 continue; // Skip this match if it's not completed
             }
             
             $score_data_json = get_post_meta($match_id, 'score_data', true);
-            $team1_id = get_post_meta($match_id, '_team1_id', true);
-            $team2_id = get_post_meta($match_id, '_team2_id', true);
+            $team1_id = intval(get_post_meta($match_id, '_team1_id', true));
+            $team2_id = intval(get_post_meta($match_id, '_team2_id', true));
+            
+            error_log("Match $match_id: team1_id = $team1_id, team2_id = $team2_id, is_completed = $is_completed");
+            error_log("Match $match_id: score_data_json = $score_data_json");
             
             if (!empty($score_data_json)) {
                 $score_data = json_decode($score_data_json, true);
+                error_log("Match $match_id: score_data_json length: " . strlen($score_data_json));
                 if (is_array($score_data)) {
+                    // Debug: Log the score data
+                    error_log("Match $match_id: Processing score_data: " . $score_data_json);
+                    
+                    // Initialize participating players arrays
+                    $participating_team1 = array();
+                    $participating_team2 = array();
+                    
                     // Process team1 and team2 data
                     foreach (['team1', 'team2'] as $team_key) {
                         if (isset($score_data[$team_key])) {
@@ -127,14 +119,32 @@ function your_plugin_fetch_players_stats_handler() {
                                 foreach ($team_data['goals'] as $goal) {
                                     if (is_array($goal) && isset($goal['playerId'])) {
                                         $player_id = strval($goal['playerId']);
-                                        if (isset($all_players[$player_id])) {
-                                            $all_players[$player_id]['goals']++;
+                                        // Find player by player_id and team_id
+                                        foreach ($all_players as &$player) {
+                                            if ($player['player_id'] === $player_id && $player['team_id'] === ${$team_key . '_id'}) {
+                                                $player['goals']++;
+                                                if ($team_key == 'team1') {
+                                                    $participating_team1[] = $player_id;
+                                                } else {
+                                                    $participating_team2[] = $player_id;
+                                                }
+                                                break;
+                                            }
                                         }
                                     } else if (!is_null($goal) && $goal !== '' && $goal !== false) {
                                         // Handle case where goal is just a player ID
                                         $player_id = strval($goal);
-                                        if (isset($all_players[$player_id])) {
-                                            $all_players[$player_id]['goals']++;
+                                        // Find player by player_id and team_id
+                                        foreach ($all_players as &$player) {
+                                            if ($player['player_id'] === $player_id && $player['team_id'] === ${$team_key . '_id'}) {
+                                                $player['goals']++;
+                                                if ($team_key == 'team1') {
+                                                    $participating_team1[] = $player_id;
+                                                } else {
+                                                    $participating_team2[] = $player_id;
+                                                }
+                                                break;
+                                            }
                                         }
                                     }
                                 }
@@ -145,107 +155,94 @@ function your_plugin_fetch_players_stats_handler() {
                                 foreach ($team_data['cards'] as $card) {
                                     if (is_array($card) && isset($card['playerId'])) {
                                         $player_id = strval($card['playerId']);
-                                        if (isset($all_players[$player_id])) {
-                                            if (isset($card['blue']) && $card['blue'] === true) {
-                                                $all_players[$player_id]['blue_cards']++;
-                                            }
-                                            if (isset($card['yellow']) && $card['yellow'] === true) {
-                                                $all_players[$player_id]['yellow_cards']++;
-                                            }
-                                            if (isset($card['red']) && $card['red'] === true) {
-                                                $all_players[$player_id]['red_cards']++;
+                                        // Find player by player_id and team_id
+                                        foreach ($all_players as &$player) {
+                                            if ($player['player_id'] === $player_id && $player['team_id'] === ${$team_key . '_id'}) {
+                                                if (isset($card['blue']) && $card['blue'] === true) {
+                                                    $player['blue_cards']++;
+                                                }
+                                                if (isset($card['yellow']) && $card['yellow'] === true) {
+                                                    $player['yellow_cards']++;
+                                                }
+                                                if (isset($card['red']) && $card['red'] === true) {
+                                                    $player['red_cards']++;
+                                                }
+                                                if ($team_key == 'team1') {
+                                                    $participating_team1[] = $player_id;
+                                                } else {
+                                                    $participating_team2[] = $player_id;
+                                                }
+                                                break;
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
-                    }
-                }
-            }
-            
-            // Count games played based on attendance data in score_data
-            if (!empty($score_data_json)) {
-                $score_data = json_decode($score_data_json, true);
-                if (is_array($score_data)) {
-                    // Check for attendance/lineup data in score_data
-                    foreach (['team1', 'team2'] as $team_key) {
-                        if (isset($score_data[$team_key]['attendance']) && is_array($score_data[$team_key]['attendance']) && !empty($score_data[$team_key]['attendance'])) {
-                            // Use attendance data if available and not empty
-                            error_log("Match $match_id: Found attendance data for $team_key: " . json_encode($score_data[$team_key]['attendance']));
-                            foreach ($score_data[$team_key]['attendance'] as $player_id) {
-                                $player_id = strval($player_id);
-                                if (isset($all_players[$player_id])) {
-                                    $all_players[$player_id]['games_played']++;
-                                    error_log("Match $match_id: Counted game for player $player_id via attendance");
+                            
+                            // Add attendance/lineup players
+                            if (isset($team_data['attendance']) && is_array($team_data['attendance'])) {
+                                error_log("Match $match_id: Found attendance data for $team_key: " . json_encode($team_data['attendance']));
+                                foreach ($team_data['attendance'] as $attendance_item) {
+                                    // Handle both formats: objects with id/name or just IDs
+                                    if (is_array($attendance_item) && isset($attendance_item['id'])) {
+                                        $player_id = strval($attendance_item['id']);
+                                        error_log("Match $match_id: Processing attendance object for $team_key, player_id: $player_id");
+                                    } else {
+                                        $player_id = strval($attendance_item);
+                                        error_log("Match $match_id: Processing attendance ID for $team_key, player_id: $player_id");
+                                    }
+                                    
+                                    if ($team_key == 'team1') {
+                                        $participating_team1[] = $player_id;
+                                    } else {
+                                        $participating_team2[] = $player_id;
+                                    }
                                 }
-                            }
-                        } else if (isset($score_data[$team_key]['lineup']) && is_array($score_data[$team_key]['lineup']) && !empty($score_data[$team_key]['lineup'])) {
-                            // Alternative: use lineup data if available and not empty
-                            error_log("Match $match_id: Found lineup data for $team_key: " . json_encode($score_data[$team_key]['lineup']));
-                            foreach ($score_data[$team_key]['lineup'] as $player_id) {
-                                $player_id = strval($player_id);
-                                if (isset($all_players[$player_id])) {
-                                    $all_players[$player_id]['games_played']++;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Fallback: If no attendance data exists, count based on team membership (old logic)
-            $has_attendance_data = false;
-            if (!empty($score_data_json)) {
-                $score_data = json_decode($score_data_json, true);
-                if (is_array($score_data)) {
-                    foreach (['team1', 'team2'] as $team_key) {
-                        if ((isset($score_data[$team_key]['attendance']) && is_array($score_data[$team_key]['attendance']) && !empty($score_data[$team_key]['attendance'])) ||
-                            (isset($score_data[$team_key]['lineup']) && is_array($score_data[$team_key]['lineup']) && !empty($score_data[$team_key]['lineup']))) {
-                            $has_attendance_data = true;
-                            error_log("Match $match_id: Found attendance/lineup data in $team_key: " . json_encode($score_data[$team_key]['attendance'] ?? $score_data[$team_key]['lineup']));
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            if (!$has_attendance_data) {
-                error_log("Match $match_id: No attendance data found, using fallback team membership logic");
-                error_log("Match $match_id: Full score_data: " . $score_data_json);
-                $match_players_counted = array(); // Track which players we've already counted for this match
-                
-                if (!empty($team1_id)) {
-                    $team1_players_json = get_post_meta($team1_id, 'team_players', true);
-                    if (!empty($team1_players_json)) {
-                        $team1_players = json_decode($team1_players_json, true);
-                        if (is_array($team1_players)) {
-                            foreach ($team1_players as $player) {
-                                if (isset($player['id']) && isset($all_players[$player['id']])) {
-                                    $player_id = $player['id'];
-                                    if (!isset($match_players_counted[$player_id])) {
-                                        $all_players[$player_id]['games_played']++;
-                                        $match_players_counted[$player_id] = true;
+                            } elseif (isset($team_data['lineup']) && is_array($team_data['lineup'])) {
+                                error_log("Match $match_id: Found lineup data for $team_key: " . json_encode($team_data['lineup']));
+                                foreach ($team_data['lineup'] as $lineup_item) {
+                                    // Handle both formats: objects with id/name or just IDs
+                                    if (is_array($lineup_item) && isset($lineup_item['id'])) {
+                                        $player_id = strval($lineup_item['id']);
+                                        error_log("Match $match_id: Processing lineup object for $team_key, player_id: $player_id");
+                                    } else {
+                                        $player_id = strval($lineup_item);
+                                        error_log("Match $match_id: Processing lineup ID for $team_key, player_id: $player_id");
+                                    }
+                                    
+                                    if ($team_key == 'team1') {
+                                        $participating_team1[] = $player_id;
+                                    } else {
+                                        $participating_team2[] = $player_id;
                                     }
                                 }
                             }
                         }
                     }
-                }
-                
-                if (!empty($team2_id)) {
-                    $team2_players_json = get_post_meta($team2_id, 'team_players', true);
-                    if (!empty($team2_players_json)) {
-                        $team2_players = json_decode($team2_players_json, true);
-                        if (is_array($team2_players)) {
-                            foreach ($team2_players as $player) {
-                                if (isset($player['id']) && isset($all_players[$player['id']])) {
-                                    $player_id = $player['id'];
-                                    if (!isset($match_players_counted[$player_id])) {
-                                        $all_players[$player_id]['games_played']++;
-                                        $match_players_counted[$player_id] = true;
-                                    }
-                                }
+                    
+                    // Make participating lists unique and increment games_played
+                    $participating_team1 = array_unique($participating_team1);
+                    $participating_team2 = array_unique($participating_team2);
+                    
+                    error_log("Match $match_id: Final participating_team1: " . json_encode($participating_team1));
+                    error_log("Match $match_id: Final participating_team2: " . json_encode($participating_team2));
+                    
+                    foreach ($participating_team1 as $player_id) {
+                        foreach ($all_players as &$player) {
+                            if ($player['player_id'] === strval($player_id) && $player['team_id'] === $team1_id) {
+                                $player['games_played']++;
+                                error_log("Match $match_id: Incremented games_played for team1 player $player_id");
+                                break;
+                            }
+                        }
+                    }
+                    
+                    foreach ($participating_team2 as $player_id) {
+                        foreach ($all_players as &$player) {
+                            if ($player['player_id'] === strval($player_id) && $player['team_id'] === $team2_id) {
+                                $player['games_played']++;
+                                error_log("Match $match_id: Incremented games_played for team2 player $player_id");
+                                break;
                             }
                         }
                     }
@@ -286,8 +283,8 @@ function your_plugin_fetch_players_stats_handler() {
         'active_players' => $active_players,
     );
 
-    // Convert associative array to indexed array for response
-    $players_array = array_values($all_players);
+    // Convert associative array to indexed array for response (already indexed, so just use as is)
+    $players_array = $all_players;
 
     wp_send_json_success(array(
         'players' => $players_array,

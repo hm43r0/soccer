@@ -2153,7 +2153,7 @@
         url: your_plugin_ajax_object.ajax_url,
         type: 'POST',
         data: {
-          action: 'your_plugin_fetch_players_stats',
+          action: 'your_plugin_fetch_all_players_stats',
           nonce: your_plugin_ajax_object.nonce
         },
         success: function (response) {
@@ -2161,6 +2161,7 @@
             playersData = response.data.players || [];
             renderPlayersTable();
             updatePlayersStats(response.data.stats || {});
+            populatePlayersFilterOptions();
           } else {
             showNotification('Failed to load players data.', 'error');
           }
@@ -2172,16 +2173,11 @@
     }
 
     function updatePlayersStats(stats) {
-      // Use the same logic as Teams tab for total players count
-      const totalPlayersFromTeams = teams.reduce(
-        (sum, team) => sum + (team.members ? team.members.length : 0),
-        0
-      );
-
-      totalPlayersEl.textContent = totalPlayersFromTeams;
+      // Use stats from backend response
+      totalPlayersEl.textContent = stats.total_players || playersData.length;
       totalGoalsEl.textContent = stats.total_goals || 0;
       totalCardsEl.textContent = stats.total_cards || 0;
-      activePlayersEl.textContent = stats.active_players || 0;
+      activePlayersEl.textContent = stats.active_players || playersData.length;
     }
 
     function renderPlayersTable() {
@@ -2212,6 +2208,7 @@
         return;
       }
 
+      // Render each player individually - no team expansion needed
       playersTableBody.innerHTML = filteredPlayers.map(player => `
           <tr class="border-b border-white/10 hover:bg-white/5 transition-colors">
             <td class="py-3 px-4">
@@ -2221,11 +2218,11 @@
                 </div>
                 <div>
                   <div class="font-medium text-white">${player.name || 'Unknown'}</div>
-                  <div class="text-xs text-gray-400">ID: ${player.player_id}</div>
+                  <div class="text-xs text-gray-400">ID: ${player.player_id || player.id}</div>
                 </div>
               </div>
             </td>
-            <td class="text-center py-3 px-4 text-gray-300">${player.team_names || player.team_name || 'Unknown'}</td>
+            <td class="text-center py-3 px-4 text-gray-300">${player.team_name || 'Unknown'}</td>
             <td class="text-center py-3 px-4 font-semibold text-blue-400">${player.games_played || 0}</td>
             <td class="text-center py-3 px-4 font-semibold text-red-400">${player.injuries || 0}</td>
             <td class="text-center py-3 px-4 font-semibold text-blue-500">${player.blue_cards || 0}</td>
@@ -2248,10 +2245,10 @@
       };
 
       const filteredResults = playersData.filter(player => {
-        // Team filter - check if player is on the selected team
+        // Team filter - check if player belongs to selected team
         if (filters.team) {
-          const playerTeamIds = player.team_ids || [player.team_id];
-          if (!playerTeamIds.includes(parseInt(filters.team))) {
+          const playerTeamId = player.team_id ? parseInt(player.team_id) : null;
+          if (playerTeamId !== parseInt(filters.team)) {
             return false;
           }
         }
@@ -2261,14 +2258,16 @@
           return false;
         }
 
-        // Season filter - check if any of the player's teams match the season
+        // Season filter - check if player's team matches the season
         if (filters.season) {
-          const playerTeamIds = player.team_ids || [player.team_id];
-          const hasMatchingSeason = playerTeamIds.some(teamId => {
-            const team = teams.find(t => t.id === teamId);
-            return team && team.team_season === filters.season;
-          });
-          if (!hasMatchingSeason) {
+          const playerTeamId = player.team_id ? parseInt(player.team_id) : null;
+          if (playerTeamId) {
+            const team = teams.find(t => t.id === playerTeamId);
+            if (!team || team.team_season !== filters.season) {
+              return false;
+            }
+          } else {
+            // If no team_id, exclude from season filter
             return false;
           }
         }
@@ -2280,23 +2279,35 @@
     }
 
     function populatePlayersFilterOptions() {
-      // Populate team filter
+      // Populate team filter based on actual player data
       if (filterPlayerTeam) {
         const currentTeamValue = filterPlayerTeam.value;
-        const teamOptions = teams.map(team =>
-          `<option value="${team.id}">${team.name}</option>`
-        ).join('');
+        const teamIds = Array.from(new Set(
+          playersData.map(player => player.team_id).filter(id => id != null)
+        )).sort((a, b) => a - b);
+
+        const teamOptions = teamIds.map(teamId => {
+          const team = teams.find(t => t.id === parseInt(teamId));
+          return `<option value="${teamId}">${team ? team.name : `Team ${teamId}`}</option>`;
+        }).join('');
+
         filterPlayerTeam.innerHTML = '<option value="">All Teams</option>' + teamOptions;
-        if (currentTeamValue && teams.some(t => String(t.id) === String(currentTeamValue))) {
+        if (currentTeamValue && teamIds.includes(parseInt(currentTeamValue))) {
           filterPlayerTeam.value = currentTeamValue;
         }
       }
 
-      // Populate season filter
+      // Populate season filter based on teams that have players
       if (filterPlayerSeason) {
         const currentSeasonValue = filterPlayerSeason.value;
+        const playerTeamIds = Array.from(new Set(
+          playersData.map(player => player.team_id).filter(id => id != null)
+        ));
+
         const seasons = Array.from(new Set(
-          teams.map(t => (t.team_season || '').toString().trim()).filter(v => v !== '')
+          teams.filter(team => playerTeamIds.includes(team.id))
+               .map(t => (t.team_season || '').toString().trim())
+               .filter(v => v !== '')
         )).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
         filterPlayerSeason.innerHTML = '<option value="">All Seasons</option>' +

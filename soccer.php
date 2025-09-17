@@ -948,6 +948,15 @@ require_once plugin_dir_path(__FILE__) . 'inc/fetch-referees.php';
 // Include players AJAX handler
 require_once plugin_dir_path(__FILE__) . 'inc/fetch-players.php';
 
+// --- AJAX Handler for Fetching All Players Stats (Frontend expects this action) ---
+add_action('wp_ajax_your_plugin_fetch_all_players_stats', 'your_plugin_fetch_all_players_stats_handler');
+add_action('wp_ajax_nopriv_your_plugin_fetch_all_players_stats', 'your_plugin_fetch_all_players_stats_handler');
+
+function your_plugin_fetch_all_players_stats_handler() {
+    // Reuse the existing logic from fetch-players.php
+    your_plugin_fetch_players_stats_handler();
+}
+
 // Include completed matches AJAX handler
 require_once plugin_dir_path(__FILE__) . 'inc/fetch-completed-matches.php';
 
@@ -1236,6 +1245,56 @@ function your_plugin_handle_update_match()
 }
 
 // Add this to your main plugin PHP file
+// AJAX Handler for Saving Attendance Data when Starting Match
+add_action('wp_ajax_save_match_attendance', function () {
+    if (!check_ajax_referer('your_plugin_ajax_nonce', 'nonce', false) || !current_user_can('referee')) {
+        wp_send_json_error(array('message' => __('Security check failed.', YOUR_PLUGIN_SLUG)));
+        return;
+    }
+
+    $match_id = intval($_POST['match_id']);
+    $attendance_data = isset($_POST['attendance_data']) ? wp_unslash($_POST['attendance_data']) : '';
+
+    if (!$match_id) {
+        wp_send_json_error(array('message' => 'Invalid match ID.'));
+        return;
+    }
+
+    if (!empty($attendance_data)) {
+        $attendance = json_decode($attendance_data, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            wp_send_json_error(array('message' => 'Invalid attendance data format.'));
+            return;
+        }
+
+        // Get existing score data or create new structure
+        $existing_score_data = get_post_meta($match_id, 'score_data', true);
+        if (!empty($existing_score_data)) {
+            $score_data = json_decode($existing_score_data, true);
+        } else {
+            $score_data = array(
+                'team1' => array('goals' => array(), 'cards' => array()),
+                'team2' => array('goals' => array(), 'cards' => array())
+            );
+        }
+
+        // Add attendance data to score_data (preserve as objects with id and name)
+        if (isset($attendance['team1'])) {
+            $score_data['team1']['attendance'] = $attendance['team1'];
+        }
+        if (isset($attendance['team2'])) {
+            $score_data['team2']['attendance'] = $attendance['team2'];
+        }
+
+        // Save the updated score_data
+        update_post_meta($match_id, 'score_data', json_encode($score_data));
+
+        wp_send_json_success(array('message' => 'Attendance saved successfully.'));
+    } else {
+        wp_send_json_error(array('message' => 'No attendance data provided.'));
+    }
+});
+
 add_action('wp_ajax_save_soccer_match_summary', function () {
     $match_id = intval($_POST['match_id']);
     $final_score = sanitize_text_field($_POST['final_score']);

@@ -13,6 +13,9 @@
               primary: "#6366f1",
               secondary: "#8b5cf6",
             },
+          zIndex: {
+            '100000': '100000',
+          },
           },
         },
       };
@@ -1427,13 +1430,40 @@
           // Preserve match id before closing the popup
           const matchIdToStart = currentMatchId;
 
-          // Close attendance popup
-          closeAttendancePopup(false); // don't reset state when proceeding
-          
-          // Now proceed with the original match start logic
-          $("#referee-matches-list, #referee-stat-cards, #referee-filters").addClass("hidden");
-          $("#admin-start-match-root").removeClass("hidden");
-          renderAdminStartMatch(matchIdToStart);
+          // Save attendance data to the match CPT before proceeding
+          $.ajax({
+            url: your_plugin_ajax_object.ajax_url,
+            type: "POST",
+            data: {
+              action: "save_match_attendance",
+              nonce: your_plugin_ajax_object.nonce,
+              match_id: matchIdToStart,
+              attendance_data: JSON.stringify(attendanceData)
+            },
+            success: function(response) {
+              if (response.success) {
+                console.log("Attendance saved successfully:", response.data.message);
+                
+                // Close attendance popup
+                closeAttendancePopup(false); // don't reset state when proceeding
+                
+                // Now proceed with the original match start logic
+                $("#referee-matches-list, #referee-stat-cards, #referee-filters").addClass("hidden");
+                $("#admin-start-match-root").removeClass("hidden");
+                renderAdminStartMatch(matchIdToStart);
+              } else {
+                showMessage("Error saving attendance: " + (response.data.message || "Unknown error"), "error");
+              }
+            },
+            error: function() {
+              showMessage("Error saving attendance data.", "error");
+              // Still proceed with match even if attendance save fails
+              closeAttendancePopup(false);
+              $("#referee-matches-list, #referee-stat-cards, #referee-filters").addClass("hidden");
+              $("#admin-start-match-root").removeClass("hidden");
+              renderAdminStartMatch(matchIdToStart);
+            }
+          });
         }
 
         // Expose functions globally for inline handlers
